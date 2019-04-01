@@ -1,0 +1,65 @@
+#! /usr/bin/perl
+
+use strict;
+use Cwd 'abs_path';
+use File::Spec;
+
+use constant {
+    IN   => 2,
+    OUT  => 3,
+    CIN  => 4,
+    COUT => 5,
+};
+
+my @colors = ("yellow", "brown", "purple", "burlywood", "orchid");
+
+sub print_subgraph {
+    my ($gv_fname, $input, $out_fname) = @_;
+
+    my @config = split /,/, $input;
+    my %subgraph = map { $_ => 1 } split / /, $config[0];
+    for my $node (split / /, $config[1]) {
+        $subgraph{$node} = IN;
+    }
+    for my $node (split / /, $config[2]) {
+        $subgraph{$node} = OUT;
+    }
+    for my $node (split / /, $config[3]) {
+        $subgraph{$node} = CIN;
+    }
+    for my $node (split / /, $config[4]) {
+        $subgraph{$node} = COUT;
+    }
+
+    my %rank;
+    my @gv;
+    my $id = 0;
+    # iterate over all node statements and rank the nodes in order of appearance
+    my @path = File::Spec->splitpath(abs_path($0));
+    my $file = File::Spec->catpath($path[0], $path[1], "gv_canon");
+    open my $fd, "-|", "gvpr", "-f", "$file", $gv_fname;
+    while (<$fd>) {
+        push @gv, $_;
+        chomp;
+        if (/^(\w+)\s*(\[.*\])?$/) {
+            if (!defined $rank{$1}) {
+                # print "<$id> $1\n";
+                $rank{$1} = $id++;
+            }
+        }
+    }
+
+    open my $out_fd, "> $out_fname";
+    for (@gv) {
+        my $line = $_;
+        if (/^(\w+)\s*(\[.*\])?$/
+            && defined $subgraph{$rank{$1}}) {
+            my $color = $colors[$subgraph{$rank{$1}} - 1];
+            print $out_fd "$1 $2 [style = filled, fillcolor = $color]\n";
+        } else {
+            print $out_fd $line;
+        }
+    }
+}
+
+print_subgraph($ARGV[0], $ARGV[1], "-");

@@ -1,0 +1,65 @@
+#!/usr/bin/gvpr -f
+# -*- mode: awk; -*-
+
+BEGIN {
+    string attributes(graph_t g, obj_t x)
+    {
+        string attrs;
+        string k;
+        string v;
+
+        attrs = "";
+        for (k = fstAttr(g, kindOf(x)); k != ""; k = nxtAttr(g, kindOf(x), k)) {
+            v = aget(x, k);
+            if (v != "") {
+                if (attrs)
+                    attrs = sprintf("%s, %s = %s", attrs, k, v);
+                else
+                    attrs = sprintf("%s = %s", k, v);
+            }
+        }
+
+        return attrs;
+    }
+}
+
+BEG_G {
+    $tvtype = TV_ne;
+
+    if (isDirect($G))
+        printf("digraph \"%s\" {\n", $G.name);
+    else
+        printf("graph \"%s\" {\n", $G.name);
+
+    attrs = attributes($G, $G);
+    if (attrs)
+        printf("%s\n", attrs);
+}
+
+N {
+    string attrs = attributes($G, $);
+    printf("%s", $.name);
+    if (attrs)
+        printf(" [%s]", attrs);
+    printf("\n");
+}
+
+E {
+    attrs = attributes($G, $);
+    if (isDirect($G))
+        printf("%s -> %s", $.tail.name, $.head.name);
+    else
+        printf("%s -- %s", $.tail.name, $.head.name);
+    if (attrs)
+        printf(" [%s]", attrs);
+    printf("\n");
+}
+
+END_G {
+    print("}");
+}
+
+# Local variables:
+# c-basic-offset: 4
+# indent-tabs-mode: nil
+# End:

@@ -1,0 +1,21 @@
+BasedOnStyle: WebKit
+AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: true
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterFunction: true
+  BeforeElse: false
+BreakBeforeBinaryOperators: None
+BreakBeforeBraces: Custom
+ColumnLimit: 80
+Cpp11BracedListStyle: true
+IndentCaseLabels: true
+IndentWidth: 4
+PenaltyBreakBeforeFirstCallParameter: 300
+PenaltyReturnTypeOnItsOwnLine: 300
+PointerAlignment: Right
+Standard: Cpp11
+UseTab: Never
