@@ -1,0 +1,437 @@
+digraph "lencod_HadamardSAD4x4_for.end.11696" {
+frequency = 201057
+N0_alloca [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N1_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N2_sext [weight = 1, forbidden = 0]
+N3_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N4_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N5_sext [weight = 1, forbidden = 0]
+N6_add [weight = 1, forbidden = 0]
+N7_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N8_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N9_sext [weight = 1, forbidden = 0]
+N10_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N11_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N12_sext [weight = 1, forbidden = 0]
+N13_add [weight = 1, forbidden = 0]
+N14_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N15_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N16_sext [weight = 1, forbidden = 0]
+N17_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N18_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N19_sext [weight = 1, forbidden = 0]
+N20_add [weight = 1, forbidden = 0]
+N21_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N22_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N23_sext [weight = 1, forbidden = 0]
+N24_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N25_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N26_sext [weight = 1, forbidden = 0]
+N27_add [weight = 1, forbidden = 0]
+N28_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N29_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N30_sext [weight = 1, forbidden = 0]
+N31_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N32_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N33_sext [weight = 1, forbidden = 0]
+N34_add [weight = 1, forbidden = 0]
+N35_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N36_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N37_sext [weight = 1, forbidden = 0]
+N38_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N39_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N40_sext [weight = 1, forbidden = 0]
+N41_add [weight = 1, forbidden = 0]
+N42_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N43_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N44_sext [weight = 1, forbidden = 0]
+N45_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N46_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N47_sext [weight = 1, forbidden = 0]
+N48_add [weight = 1, forbidden = 0]
+N49_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N50_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N51_sext [weight = 1, forbidden = 0]
+N52_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N53_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N54_sext [weight = 1, forbidden = 0]
+N55_add [weight = 1, forbidden = 0]
+N56_sub [weight = 1, forbidden = 0]
+N57_sub [weight = 1, forbidden = 0]
+N58_sub [weight = 1, forbidden = 0]
+N59_sub [weight = 1, forbidden = 0]
+N60_sub [weight = 1, forbidden = 0]
+N61_sub [weight = 1, forbidden = 0]
+N62_sub [weight = 1, forbidden = 0]
+N63_sub [weight = 1, forbidden = 0]
+N64_add [weight = 1, forbidden = 0]
+N65_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N66_add [weight = 1, forbidden = 0]
+N67_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N68_add [weight = 1, forbidden = 0]
+N69_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N70_add [weight = 1, forbidden = 0]
+N71_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N72_add [weight = 1, forbidden = 0]
+N73_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N74_add [weight = 1, forbidden = 0]
+N75_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N76_add [weight = 1, forbidden = 0]
+N77_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N78_add [weight = 1, forbidden = 0]
+N79_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N80_sub [weight = 1, forbidden = 0]
+N81_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N82_sub [weight = 1, forbidden = 0]
+N83_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N84_sub [weight = 1, forbidden = 0]
+N85_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N86_sub [weight = 1, forbidden = 0]
+N87_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N88_sub [weight = 1, forbidden = 0]
+N89_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N90_sub [weight = 1, forbidden = 0]
+N91_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N92_sub [weight = 1, forbidden = 0]
+N93_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N94_sub [weight = 1, forbidden = 0]
+N95_getelementptr [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N96_add [weight = 1, forbidden = 0]
+N97_add [weight = 1, forbidden = 0]
+N98_sub [weight = 1, forbidden = 0]
+N99_sub [weight = 1, forbidden = 0]
+N100_add [weight = 1, forbidden = 0]
+N101_add [weight = 1, forbidden = 0]
+N102_sub [weight = 1, forbidden = 0]
+N103_sub [weight = 1, forbidden = 0]
+N104_add [weight = 1, forbidden = 0]
+N105_add [weight = 1, forbidden = 0]
+N106_sub [weight = 1, forbidden = 0]
+N107_sub [weight = 1, forbidden = 0]
+N108_add [weight = 1, forbidden = 0]
+N109_add [weight = 1, forbidden = 0]
+N110_sub [weight = 1, forbidden = 0]
+N111_sub [weight = 1, forbidden = 0]
+N112_add [weight = 1, forbidden = 0]
+N113_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N114_sub [weight = 1, forbidden = 0]
+N115_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N116_add [weight = 1, forbidden = 0]
+N117_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N118_sub [weight = 1, forbidden = 0]
+N119_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N120_add [weight = 1, forbidden = 0]
+N121_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N122_sub [weight = 1, forbidden = 0]
+N123_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N124_add [weight = 1, forbidden = 0]
+N125_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N126_sub [weight = 1, forbidden = 0]
+N127_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N128_add [weight = 1, forbidden = 0]
+N129_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N130_sub [weight = 1, forbidden = 0]
+N131_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N132_add [weight = 1, forbidden = 0]
+N133_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N134_sub [weight = 1, forbidden = 0]
+N135_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N136_add [weight = 1, forbidden = 0]
+N137_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N138_sub [weight = 1, forbidden = 0]
+N139_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N140_add [weight = 1, forbidden = 0]
+N141_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N142_sub [weight = 1, forbidden = 0]
+N143_store [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N144_bitcast [weight = 1, forbidden = 0]
+N145_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N146_ashr [weight = 1, forbidden = 0]
+N147_xor [weight = 1, forbidden = 0]
+N148_lshr [weight = 1, forbidden = 0]
+N149_add [weight = 1, forbidden = 0]
+N150_bitcast [weight = 1, forbidden = 0]
+N151_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N152_ashr [weight = 1, forbidden = 0]
+N153_xor [weight = 1, forbidden = 0]
+N154_lshr [weight = 1, forbidden = 0]
+N155_add [weight = 1, forbidden = 0]
+N156_add [weight = 1, forbidden = 0]
+N157_bitcast [weight = 1, forbidden = 0]
+N158_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N159_ashr [weight = 1, forbidden = 0]
+N160_xor [weight = 1, forbidden = 0]
+N161_lshr [weight = 1, forbidden = 0]
+N162_add [weight = 1, forbidden = 0]
+N163_add [weight = 1, forbidden = 0]
+N164_bitcast [weight = 1, forbidden = 0]
+N165_load [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N166_ashr [weight = 1, forbidden = 0]
+N167_xor [weight = 1, forbidden = 0]
+N168_lshr [weight = 1, forbidden = 0]
+N169_add [weight = 1, forbidden = 0]
+N170_add [weight = 1, forbidden = 0]
+N171_shufflevector [weight = 1, forbidden = 0]
+N172_add [weight = 1, forbidden = 0]
+N173_shufflevector [weight = 1, forbidden = 0]
+N174_add [weight = 1, forbidden = 0]
+N175_extractelement [weight = 1, forbidden = 0]
+N176_add [weight = 1, forbidden = 0]
+N177_ashr [weight = 1, forbidden = 0]
+N178_ret [weight = 1, forbidden = 1, fillcolor = red, style = filled]
+N0_alloca -> N65_getelementptr [color = red]
+N0_alloca -> N67_getelementptr [color = red]
+N0_alloca -> N69_getelementptr [color = red]
+N0_alloca -> N71_getelementptr [color = red]
+N0_alloca -> N73_getelementptr [color = red]
+N0_alloca -> N75_getelementptr [color = red]
+N0_alloca -> N77_getelementptr [color = red]
+N0_alloca -> N79_getelementptr [color = red]
+N0_alloca -> N81_getelementptr [color = red]
+N0_alloca -> N83_getelementptr [color = red]
+N0_alloca -> N85_getelementptr [color = red]
+N0_alloca -> N87_getelementptr [color = red]
+N0_alloca -> N89_getelementptr [color = red]
+N0_alloca -> N91_getelementptr [color = red]
+N0_alloca -> N93_getelementptr [color = red]
+N0_alloca -> N95_getelementptr [color = red]
+N0_alloca -> N144_bitcast [color = red]
+N1_load -> N2_sext [color = red]
+N2_sext -> N6_add
+N2_sext -> N60_sub
+N3_getelementptr -> N4_load [color = red]
+N4_load -> N5_sext [color = red]
+N5_sext -> N6_add
+N5_sext -> N60_sub
+N6_add -> N64_add
+N6_add -> N80_sub
+N7_getelementptr -> N8_load [color = red]
+N8_load -> N9_sext [color = red]
+N9_sext -> N13_add
+N9_sext -> N61_sub
+N10_getelementptr -> N11_load [color = red]
+N11_load -> N12_sext [color = red]
+N12_sext -> N13_add
+N12_sext -> N61_sub
+N13_add -> N66_add
+N13_add -> N82_sub
+N14_getelementptr -> N15_load [color = red]
+N15_load -> N16_sext [color = red]
+N16_sext -> N20_add
+N16_sext -> N62_sub
+N17_getelementptr -> N18_load [color = red]
+N18_load -> N19_sext [color = red]
+N19_sext -> N20_add
+N19_sext -> N62_sub
+N20_add -> N68_add
+N20_add -> N84_sub
+N21_getelementptr -> N22_load [color = red]
+N22_load -> N23_sext [color = red]
+N23_sext -> N27_add
+N23_sext -> N63_sub
+N24_getelementptr -> N25_load [color = red]
+N25_load -> N26_sext [color = red]
+N26_sext -> N27_add
+N26_sext -> N63_sub
+N27_add -> N70_add
+N27_add -> N86_sub
+N28_getelementptr -> N29_load [color = red]
+N29_load -> N30_sext [color = red]
+N30_sext -> N34_add
+N30_sext -> N56_sub
+N31_getelementptr -> N32_load [color = red]
+N32_load -> N33_sext [color = red]
+N33_sext -> N34_add
+N33_sext -> N56_sub
+N34_add -> N64_add
+N34_add -> N80_sub
+N35_getelementptr -> N36_load [color = red]
+N36_load -> N37_sext [color = red]
+N37_sext -> N41_add
+N37_sext -> N57_sub
+N38_getelementptr -> N39_load [color = red]
+N39_load -> N40_sext [color = red]
+N40_sext -> N41_add
+N40_sext -> N57_sub
+N41_add -> N66_add
+N41_add -> N82_sub
+N42_getelementptr -> N43_load [color = red]
+N43_load -> N44_sext [color = red]
+N44_sext -> N48_add
+N44_sext -> N58_sub
+N45_getelementptr -> N46_load [color = red]
+N46_load -> N47_sext [color = red]
+N47_sext -> N48_add
+N47_sext -> N58_sub
+N48_add -> N68_add
+N48_add -> N84_sub
+N49_getelementptr -> N50_load [color = red]
+N50_load -> N51_sext [color = red]
+N51_sext -> N55_add
+N51_sext -> N59_sub
+N52_getelementptr -> N53_load [color = red]
+N53_load -> N54_sext [color = red]
+N54_sext -> N55_add
+N54_sext -> N59_sub
+N55_add -> N70_add
+N55_add -> N86_sub
+N56_sub -> N72_add
+N56_sub -> N88_sub
+N57_sub -> N74_add
+N57_sub -> N90_sub
+N58_sub -> N76_add
+N58_sub -> N92_sub
+N59_sub -> N78_add
+N59_sub -> N94_sub
+N60_sub -> N72_add
+N60_sub -> N88_sub
+N61_sub -> N74_add
+N61_sub -> N90_sub
+N62_sub -> N76_add
+N62_sub -> N92_sub
+N63_sub -> N78_add
+N63_sub -> N94_sub
+N64_add -> N96_add
+N64_add -> N99_sub
+N65_getelementptr -> N113_store [color = red]
+N66_add -> N97_add
+N66_add -> N98_sub
+N67_getelementptr -> N115_store [color = red]
+N68_add -> N97_add
+N68_add -> N98_sub
+N69_getelementptr -> N117_store [color = red]
+N70_add -> N96_add
+N70_add -> N99_sub
+N71_getelementptr -> N119_store [color = red]
+N72_add -> N100_add
+N72_add -> N103_sub
+N73_getelementptr -> N121_store [color = red]
+N73_getelementptr -> N150_bitcast [color = red]
+N74_add -> N101_add
+N74_add -> N102_sub
+N75_getelementptr -> N123_store [color = red]
+N76_add -> N101_add
+N76_add -> N102_sub
+N77_getelementptr -> N125_store [color = red]
+N78_add -> N100_add
+N78_add -> N103_sub
+N79_getelementptr -> N127_store [color = red]
+N80_sub -> N104_add
+N80_sub -> N107_sub
+N81_getelementptr -> N129_store [color = red]
+N81_getelementptr -> N157_bitcast [color = red]
+N82_sub -> N105_add
+N82_sub -> N106_sub
+N83_getelementptr -> N131_store [color = red]
+N84_sub -> N105_add
+N84_sub -> N106_sub
+N85_getelementptr -> N133_store [color = red]
+N86_sub -> N104_add
+N86_sub -> N107_sub
+N87_getelementptr -> N135_store [color = red]
+N88_sub -> N108_add
+N88_sub -> N111_sub
+N89_getelementptr -> N137_store [color = red]
+N89_getelementptr -> N164_bitcast [color = red]
+N90_sub -> N109_add
+N90_sub -> N110_sub
+N91_getelementptr -> N139_store [color = red]
+N92_sub -> N109_add
+N92_sub -> N110_sub
+N93_getelementptr -> N141_store [color = red]
+N94_sub -> N108_add
+N94_sub -> N111_sub
+N95_getelementptr -> N143_store [color = red]
+N96_add -> N112_add
+N96_add -> N114_sub
+N97_add -> N112_add
+N97_add -> N114_sub
+N98_sub -> N116_add
+N98_sub -> N118_sub
+N99_sub -> N116_add
+N99_sub -> N118_sub
+N100_add -> N120_add
+N100_add -> N122_sub
+N101_add -> N120_add
+N101_add -> N122_sub
+N102_sub -> N124_add
+N102_sub -> N126_sub
+N103_sub -> N124_add
+N103_sub -> N126_sub
+N104_add -> N128_add
+N104_add -> N130_sub
+N105_add -> N128_add
+N105_add -> N130_sub
+N106_sub -> N132_add
+N106_sub -> N134_sub
+N107_sub -> N132_add
+N107_sub -> N134_sub
+N108_add -> N136_add
+N108_add -> N138_sub
+N109_add -> N136_add
+N109_add -> N138_sub
+N110_sub -> N140_add
+N110_sub -> N142_sub
+N111_sub -> N140_add
+N111_sub -> N142_sub
+N112_add -> N113_store
+N114_sub -> N115_store
+N116_add -> N117_store
+N118_sub -> N119_store
+N120_add -> N121_store
+N122_sub -> N123_store
+N124_add -> N125_store
+N126_sub -> N127_store
+N128_add -> N129_store
+N130_sub -> N131_store
+N132_add -> N133_store
+N134_sub -> N135_store
+N136_add -> N137_store
+N138_sub -> N139_store
+N140_add -> N141_store
+N142_sub -> N143_store
+N144_bitcast -> N145_load
+N145_load -> N146_ashr [color = red]
+N145_load -> N147_xor [color = red]
+N145_load -> N148_lshr [color = red]
+N146_ashr -> N147_xor
+N147_xor -> N149_add
+N148_lshr -> N149_add
+N149_add -> N155_add
+N150_bitcast -> N151_load
+N151_load -> N152_ashr [color = red]
+N151_load -> N153_xor [color = red]
+N151_load -> N154_lshr [color = red]
+N152_ashr -> N153_xor
+N153_xor -> N156_add
+N154_lshr -> N155_add
+N155_add -> N156_add
+N156_add -> N162_add
+N157_bitcast -> N158_load
+N158_load -> N159_ashr [color = red]
+N158_load -> N160_xor [color = red]
+N158_load -> N161_lshr [color = red]
+N159_ashr -> N160_xor
+N160_xor -> N163_add
+N161_lshr -> N162_add
+N162_add -> N163_add
+N163_add -> N169_add
+N164_bitcast -> N165_load
+N165_load -> N166_ashr [color = red]
+N165_load -> N167_xor [color = red]
+N165_load -> N168_lshr [color = red]
+N166_ashr -> N167_xor
+N167_xor -> N170_add
+N168_lshr -> N169_add
+N169_add -> N170_add
+N170_add -> N171_shufflevector
+N170_add -> N172_add
+N171_shufflevector -> N172_add
+N172_add -> N173_shufflevector
+N172_add -> N174_add
+N173_shufflevector -> N174_add
+N174_add -> N175_extractelement
+N175_extractelement -> N176_add
+N176_add -> N177_ashr
+N177_ashr -> N178_ret
+}

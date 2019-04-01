@@ -1,0 +1,65 @@
+#! /usr/bin/perl
+
+use strict;
+use Cwd 'abs_path';
+use File::Spec;
+
+my %attrs;
+my %rank;
+my @gv;
+my $id = 1;
+# iterate over all node statements and rank the nodes in order of appearance
+my @path = File::Spec->splitpath(abs_path($0));
+my $file = File::Spec->catpath($path[0], $path[1], "gv_canon");
+open my $fd, "-|", "gvpr", "-f", "$file", $ARGV[0];
+while (<$fd>) {
+    push @gv, $_;
+    chomp;
+    if (/^(\w+)\s*(?:\[(.*)\])?$/) {
+        if (!defined $rank{$1}) {
+            my $weight = 1;
+            my $forbidden = 0;
+            for my $attr (split /,/, $2) {
+                my ($k, $v) = grep { s/^\s+|\s+$//g } split /=/, $attr;
+                $weight = $v if ($k eq "weight");
+                $forbidden = $v if ($k eq "forbidden");
+            }
+            # print "<$id> $1\n";
+            $attrs{$id} = "$weight $forbidden";
+            $rank{$1} = $id++;
+        }
+    }
+}
+close $fd;
+
+my $name;
+my $freq;
+my %edges;
+my $n_edges;
+
+for (@gv) {
+    chomp;
+    if (/^digraph "([^"]+)" {/) {
+        $name = $1;
+    } elsif (/^frequency = (\d+)/) {
+        $freq = $1;
+    } elsif (/^(\w+) -> (\w+)/) {
+        my $u = $rank{$1};
+        my $v = $rank{$2};
+        push @{ $edges{$u} }, $v;
+        $n_edges++;
+    }
+}
+
+my $n_nodes = keys %attrs;
+
+print "p convex $n_nodes $n_edges $name $freq\n";
+
+for my $id (sort {$a <=> $b} keys %attrs) {
+    print "n $id $attrs{$id}\n";
+    if ($edges{$id}) {
+        for my $v (sort {$b <=> $a} @{ $edges{$id} }) {
+            print "e $id $v\n";
+        }
+    }
+}

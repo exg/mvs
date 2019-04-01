@@ -1,0 +1,774 @@
+/* Copyright (C) 2013-2019 Emanuele Giaquinta
+
+   This program is free software; you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by the
+   Free Software Foundation; either version 2, or (at your option) any
+   later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, see <http://www.gnu.org/licenses/>.  */
+
+#include "mvs.h"
+#include "common.h"
+#include "graph.h"
+#include "vs.h"
+#include <cassert>
+#include <climits>
+#include <math.h>
+
+static const bool USE_BK = false;
+static const bool VERIFY = false;
+
+static bool is_source(const DFG &dfg, const intset &config, int u)
+{
+    for (auto &v : dfg.in_edges(u)) {
+        if (v < dfg.num_nodes() && config.contains(v))
+            return false;
+    }
+    return true;
+}
+
+static bool is_sink(const DFG &dfg, const intset &config, int u)
+{
+    for (auto &v : dfg.out_edges(u)) {
+        if (config.contains(v))
+            return false;
+    }
+    return true;
+}
+
+static bool is_permanent(const DFG &dfg,
+                         const intset &config,
+                         const intset &nodes_left,
+                         int u)
+{
+    if (!nodes_left.contains(u))
+        return true;
+    if (!dfg.pred(u).intersects_difference(config, nodes_left))
+        return false;
+    if (!dfg.succ(u).intersects_difference(config, nodes_left))
+        return false;
+    return true;
+}
+
+static bool input_is_permanent(const DFG &dfg,
+                               const intset &config,
+                               const intset &nodes_left,
+                               int u)
+{
+    for (auto &v : dfg.out_edges(u)) {
+        if (config.contains(v) && is_permanent(dfg, config, nodes_left, v))
+            return true;
+    }
+    return false;
+}
+
+static void mvs_update_io(const DFG &dfg,
+                          const intset &nodes,
+                          int u,
+                          bool add,
+                          int &num_in,
+                          int &num_out)
+{
+    io_delta_iter iter(dfg, nodes, u, add);
+    for (;;) {
+        bool input;
+        bool add;
+        int v = iter.next(input, add);
+        if (v == -1)
+            break;
+
+        int inc = add ? 1 : -1;
+        if (input)
+            num_in += inc;
+        else
+            num_out += inc;
+    }
+}
+
+static void mvs_update_io(const DFG &dfg,
+                          const intset &nodes,
+                          int u,
+                          bool add,
+                          vmap<int, double> &inputs,
+                          vset<int> &outputs)
+{
+    io_delta_iter iter(dfg, nodes, u, add);
+    for (;;) {
+        bool input;
+        bool add;
+        int v = iter.next(input, add);
+        if (v == -1)
+            break;
+
+        if (input) {
+            if (add)
+                inputs.add(v, 0);
+            else
+                inputs.remove(v);
+        } else {
+            if (add)
+                outputs.add(v);
+            else
+                outputs.remove(v);
+        }
+    }
+}
+
+static void mvs_io(const DFG &dfg,
+                   const intset &nodes,
+                   vmap<int, double> &inputs,
+                   vset<int> &outputs)
+{
+    inputs.clear();
+    outputs.clear();
+
+    int id = 0;
+    for (;;) {
+        bool input;
+        int i = io_iter_next(dfg, nodes, id, input);
+        if (i == -1)
+            break;
+
+        if (input)
+            inputs.add(i, 0);
+        else
+            outputs.add(i);
+    }
+}
+
+int mvs_finder::find_best_recursion_node(int max_num_in,
+                                         int max_num_out,
+                                         int num_perm_in,
+                                         int num_perm_out)
+{
+    int id = -1;
+    std::pair<int, int> best_delta(0, 0);
+    int u = 0;
+    for (;;) {
+        u = nodes_left_.find_next(u);
+        if (u == -1)
+            break;
+
+        bool source = is_source(*dfg_, config_, u);
+        bool sink = is_sink(*dfg_, config_, u);
+
+        if (source || sink) {
+            std::pair<int, int> delta(0, 0);
+            nodes_left_.remove(u);
+            for (auto &input : inputs_) {
+                int v = input.first;
+                if (input_is_permanent(*dfg_, config_, nodes_left_, v))
+                    delta.first++;
+            }
+            for (auto &output : outputs_)
+                if (is_permanent(*dfg_, config_, nodes_left_, output))
+                    delta.second++;
+            nodes_left_.add(u);
+
+            delta.first -= num_perm_in;
+            delta.second -= num_perm_out;
+
+            if (max_num_in - num_perm_in > max_num_out - num_perm_out)
+                std::swap(delta.first, delta.second);
+
+            if (id == -1 || delta > best_delta) {
+                id = u;
+                best_delta = delta;
+            }
+        }
+        u++;
+    }
+    return id;
+}
+
+void mvs_finder::visit(double dels,
+                       bool single,
+                       int &max_weight,
+                       int max_num_in,
+                       int max_num_out)
+{
+    calls_++;
+
+    if (dels < 0 || (count_ && single))
+        return;
+
+    if (VERIFY) {
+        vmap<int, double> inputs;
+        vset<int> outputs;
+        mvs_io(*dfg_, config_, inputs, outputs);
+        assert(inputs_.size() == inputs.size() &&
+               outputs_.size() == outputs.size());
+        for (auto &input : inputs)
+            assert(inputs_.find(input.first) != inputs_.end());
+        for (auto &output : outputs)
+            assert(std::find(outputs_.begin(), outputs_.end(), output) !=
+                   outputs_.end());
+    }
+
+    if (inputs_.size() <= max_num_in && outputs_.size() <= max_num_out) {
+        double weight = config_weight(*dfg_, config_);
+        int iweight = weight;
+        for (auto &cluster : s_clusters_)
+            cluster.expand(config_);
+        for (auto &cluster : s_nodes_)
+            cluster.expand(config_);
+
+        if (single) {
+            count_++;
+            max_weight = std::max(max_weight, iweight);
+        } else if (iweight == max_weight) {
+            if (std::find_if(io_output_->begin(),
+                             io_output_->end(),
+                             [this](const mvs &mvs) {
+                                 return mvs.config() == this->config_;
+                             }) == io_output_->end()) {
+                count_++;
+                io_output_->emplace_back(config_,
+                                         inputs_.size(),
+                                         outputs_.size(),
+                                         weight);
+            }
+        }
+
+        for (auto &cluster : s_clusters_)
+            cluster.contract(config_);
+        for (auto &cluster : s_nodes_)
+            cluster.contract(config_);
+        return;
+    }
+
+    // pruning
+    io_analysis analysis(*this);
+
+    bool prune = false;
+    int required_dels_in = 0;
+    int required_dels_out = 0;
+    if (inputs_.size() - max_num_in > 0) {
+        size_t n = inputs_.size() - max_num_in;
+        if (analysis.num_perm_in() > max_num_in) {
+            if (flags_ & (1 << 1)) {
+                pruned_[0]++;
+                prune = true;
+            }
+        } else {
+            required_dels_in = ceil(analysis.best_input_weights(n));
+        }
+    }
+    if (outputs_.size() - max_num_out > 0) {
+        if (analysis.num_perm_out() > max_num_out) {
+            if (flags_ & (1 << 2)) {
+                pruned_[1]++;
+                prune = true;
+            }
+        } else
+            required_dels_out = outputs_.size() - max_num_out;
+    }
+
+    int num_shared_non_perm_out = std::min({
+        analysis.num_shared_non_perm_out(),
+        required_dels_in,
+        required_dels_out,
+    });
+    double rnodes_weight = 0;
+    if (!prune) {
+        rnodes_weight = analysis.best_rnode_weights(
+            required_dels_in + required_dels_out - num_shared_non_perm_out);
+    }
+
+    if ((flags_ & (1 << 3)) && rnodes_weight > dels) {
+        pruned_[2]++;
+        prune = true;
+    }
+
+    if (prune)
+        return;
+
+    int id = find_best_recursion_node(max_num_in,
+                                      max_num_out,
+                                      analysis.num_perm_in(),
+                                      analysis.num_perm_out());
+    if (id == -1)
+        return;
+
+    nodes_left_.remove(id);
+
+    config_.remove(id);
+    mvs_update_io(*dfg_, config_, id, false, inputs_, outputs_);
+    visit(dels - dfg_->weight(id), single, max_weight, max_num_in, max_num_out);
+
+    config_.add(id);
+    mvs_update_io(*dfg_, config_, id, true, inputs_, outputs_);
+    visit(dels, single, max_weight, max_num_in, max_num_out);
+
+    nodes_left_.add(id);
+}
+
+int mvs_finder::find_mvsio_(mvs &mvs,
+                            bool single,
+                            int max_io_weight,
+                            int max_num_in,
+                            int max_num_out)
+{
+    config_.clear();
+    config_.add_difference(mvs.config(), collapsed_);
+    nodes_left_ = config_;
+
+    mvs_io(*dfg_, config_, inputs_, outputs_);
+
+    int iweight = ceil(mvs.weight());
+    int max_dels = iweight - max_io_weight;
+    if (single) {
+        fprintf(stderr,
+                "VS-CIO-SINGLE NUM-INPUTS=%d NUM-OUTPUTS=%d CONNECTED=%d\n",
+                max_num_in,
+                max_num_out,
+                !mvs.disconnected);
+        int io_weight = 0;
+        switch (itype_) {
+            case iter_type::LINEAR:
+                for (int dels = 1; dels <= max_dels; dels++) {
+                    reset_stats();
+                    visit(dels, true, io_weight, max_num_in, max_num_out);
+                    dump_stats(iweight - dels);
+                    if (count_ > 0)
+                        break;
+                }
+                break;
+            case iter_type::LINEAR_REV:
+                for (int dels = max_dels; dels >= 1; dels--) {
+                    reset_stats();
+                    visit(dels, true, io_weight, max_num_in, max_num_out);
+                    dump_stats(iweight - dels);
+                    if (count_ == 0)
+                        break;
+                }
+                break;
+            case iter_type::BINARY_SEARCH:
+                int l = 1;
+                int r = max_dels;
+                while (r >= l) {
+                    int dels = (l + r) / 2;
+                    reset_stats();
+                    visit(dels, true, io_weight, max_num_in, max_num_out);
+                    dump_stats(iweight - dels);
+                    if (count_ > 0)
+                        r = dels - 1;
+                    else
+                        l = dels + 1;
+                }
+                break;
+        }
+
+        return io_weight;
+    } else {
+        fprintf(stderr,
+                "VS-CIO-ENUM NUM-INPUTS=%d NUM-OUTPUTS=%d CONNECTED=%d\n",
+                max_num_in,
+                max_num_out,
+                !mvs.disconnected);
+        reset_stats();
+        visit(max_dels, false, max_io_weight, max_num_in, max_num_out);
+        dump_stats(max_io_weight);
+    }
+
+    return max_io_weight;
+}
+
+void mvs_finder::find_mvsio(mvs &mvs,
+                            bool single,
+                            int max_io_weight,
+                            int max_num_in,
+                            int max_num_out)
+{
+    if (!(flags_ & (1 << 4))) {
+        mvs.io_weight =
+            find_mvsio_(mvs, single, max_io_weight, max_num_in, max_num_out);
+        return;
+    }
+
+    for (auto &cluster : s_clusters_)
+        link_cluster(cluster);
+
+    std::vector<double> s_weights;
+    int s_node_input_delta = 1;
+    if (single || !mvs.disconnected) {
+        s_nodes_ = snode_enum(*dfg_, mvs.config(), s_clusters_);
+        fprintf(stderr, "NUM-S-NODES=%lu\n", s_nodes_.size());
+        for (auto &cluster : s_nodes_) {
+            link_cluster(cluster);
+            s_weights.push_back(dfg_->weight(cluster.nodes().front()));
+            if (dfg_->out_edges(cluster.src()).size() > 1)
+                s_node_input_delta = 0;
+        }
+        std::sort(s_weights.begin(), s_weights.end(), std::greater<double>());
+    }
+
+    mvs.io_weight =
+        find_mvsio_(mvs, single, max_io_weight, max_num_in, max_num_out);
+    max_io_weight = std::max(max_io_weight, mvs.io_weight);
+
+    if (single && max_num_out > 1 && s_nodes_.size() > 0) {
+        int m = std::min(max_num_out - 1, (int)s_nodes_.size());
+        int _max_num_in = max_num_in;
+        int _max_num_out = max_num_out;
+        double psum = 0;
+        double sum = 0;
+
+        if (s_node_input_delta && m > max_num_in - 1)
+            m = max_num_in - 1;
+        for (int i = 0; i < m; i++)
+            sum += s_weights[i];
+        for (int i = 0; i < m; i++) {
+            _max_num_in -= s_node_input_delta;
+            _max_num_out--;
+            psum += s_weights[i];
+            int io_weight = find_mvsio_(mvs,
+                                        true,
+                                        max_io_weight - sum,
+                                        _max_num_in,
+                                        _max_num_out);
+            if (io_weight + psum >= mvs.io_weight) {
+                mvs.disconnected = true;
+                break;
+            }
+            if (io_weight + sum < mvs.io_weight)
+                break;
+        }
+    }
+
+    for (auto &cluster : s_nodes_)
+        unlink_cluster(cluster);
+    s_nodes_.clear();
+
+    if (single && mvs.disconnected)
+        mvs.io_weight =
+            find_mvsio_(mvs, true, max_io_weight, max_num_in, max_num_out);
+
+    for (auto &cluster : s_clusters_)
+        unlink_cluster(cluster);
+}
+
+std::vector<mvs> mvs_finder::mvs_enum(int max_num_in,
+                                      int max_num_out,
+                                      iter_type itype,
+                                      uint8_t flags)
+{
+    itype_ = itype;
+    flags_ = flags;
+    fprintf(stderr,
+            "\nMVS-ENUM NUM-INPUTS=%d NUM-OUTPUTS=%d\n",
+            max_num_in,
+            max_num_out);
+    fprintf(stderr, "OPTS=%x\n", flags_);
+
+    std::vector<mvs> output;
+    io_output_ = &output;
+    int max_io_weight = 0;
+    for (auto &mvsc : mvs_vec_) {
+        fprintf(stderr, "\nMAX-IO-WEIGHT=%d\n", max_io_weight);
+        fprintf(stderr,
+                "mvs-c NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
+                mvsc.num_in(),
+                mvsc.num_out());
+        dump_intset(mvsc.config(), stderr);
+        fprintf(stderr, "WEIGHT=%f\n", mvsc.weight());
+
+        int m = flags_ & (1 << 5) ? max_io_weight : 0;
+        if (mvsc.weight() >= m) {
+            if (mvsc.num_in() > max_num_in || mvsc.num_out() > max_num_out)
+                find_mvsio(mvsc, true, m, max_num_in, max_num_out);
+            else
+                mvsc.io_weight = mvsc.weight();
+            max_io_weight = std::max(max_io_weight, mvsc.io_weight);
+        }
+        fprintf(stderr, "IO-WEIGHT=%d\n", mvsc.io_weight);
+    }
+    fprintf(stderr, "\nMAX-IO-WEIGHT=%d\n", max_io_weight);
+
+    for (auto &mvsc : mvs_vec_) {
+        if (mvsc.io_weight == max_io_weight) {
+            fprintf(stderr,
+                    "\nMVS-C NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
+                    mvsc.num_in(),
+                    mvsc.num_out());
+            dump_intset(mvsc.config(), stderr);
+            if (mvsc.io_weight < mvsc.weight())
+                find_mvsio(mvsc, false, max_io_weight, max_num_in, max_num_out);
+            else
+                io_output_->emplace_back(mvsc.config(),
+                                         mvsc.num_in(),
+                                         mvsc.num_out(),
+                                         mvsc.weight());
+        }
+    }
+
+    double max_weight = 0;
+    for (auto &mvs : output)
+        if (mvs.weight() > max_weight && !fp_eq(mvs.weight(), max_weight, 0.01))
+            max_weight = mvs.weight();
+
+    for (auto it = output.begin(); it != output.end();)
+        if (max_weight > (*it).weight() &&
+            !fp_eq((*it).weight(), max_weight, 0.01))
+            it = output.erase(it);
+        else
+            it++;
+    return output;
+}
+
+void mvs_finder::link_cluster(const s_cluster &cluster)
+{
+    for (auto &edge : cluster.edges())
+        dfg_->remove_edge(edge.first, edge.second);
+    dfg_->add_edge(cluster.src(), cluster.dst());
+    for (auto &node : cluster.nodes()) {
+        collapsed_.add(node);
+        dfg_->weight(cluster.dst()) += dfg_->weight(node);
+    }
+}
+
+void mvs_finder::unlink_cluster(const s_cluster &cluster)
+{
+    dfg_->remove_edge(cluster.src(), cluster.dst());
+    for (auto &edge : cluster.edges())
+        dfg_->add_edge(edge.first, edge.second);
+    for (auto &node : cluster.nodes()) {
+        collapsed_.remove(node);
+        dfg_->weight(cluster.dst()) -= dfg_->weight(node);
+    }
+}
+
+void mvs_finder::add_config()
+{
+    double weight = config_weight(*dfg_, config_);
+    mvs_vec_.emplace_back(config_, num_in_, num_out_, weight);
+}
+
+void mvs_finder::verify_config()
+{
+    int num_in, num_out;
+    std::tie(num_in, num_out) = config_io(*dfg_, config_);
+    assert(num_in_ == num_in && num_out_ == num_out);
+}
+
+void mvs_finder::update_config(int id, bool add)
+{
+    for (auto &v : v_clusters_[id].nodes) {
+        if (add)
+            config_.add(v);
+        else
+            config_.remove(v);
+        mvs_update_io(*dfg_, config_, v, add, num_in_, num_out_);
+    }
+}
+
+static void dump_v_graph(Graph &v_graph, std::vector<v_cluster> &v_clusters)
+{
+    for (unsigned i = 0; i < v_clusters.size(); i++) {
+        fprintf(stderr,
+                "V-CLUSTER %u NUM-ADJS=%d",
+                i,
+                (int)v_graph.node(i).edges().size());
+        fprintf(stderr, "\n  NODES=");
+        for (auto &node : v_clusters[i].nodes)
+            fprintf(stderr, "%d ", node);
+        fprintf(stderr, "\n  ADJ=");
+        for (auto &edge : v_graph.node(i).edges())
+            fprintf(stderr, "%d ", edge);
+        fprintf(stderr, "\n");
+    }
+}
+
+static void dump_s_clusters(std::vector<s_cluster> &s_clusters)
+{
+    for (auto &cluster : s_clusters) {
+        fprintf(stderr,
+                "S-CLUSTER SRC=%d DST=%d",
+                cluster.src(),
+                cluster.dst());
+        fprintf(stderr, "\n  NODES=");
+        for (auto &node : cluster.nodes())
+            fprintf(stderr, "%d ", node);
+        fprintf(stderr, "\n  EDGES=");
+        for (auto &edge : cluster.edges())
+            fprintf(stderr, "(%d, %d) ", edge.first, edge.second);
+        fprintf(stderr, "\n");
+    }
+}
+
+mvs_finder::mvs_finder(DFG *dfg)
+    : dfg_(dfg)
+    , config_(dfg->num_nodes())
+    , nodes_left_(dfg->num_nodes())
+    , collapsed_(dfg->num_nodes())
+{
+    // compute P sets and equivalence classes
+    auto class_of = std::make_unique<int[]>(dfg->num_nodes());
+    intset P(dfg->num_nodes());
+    auto F = dfg->forbidden();
+    for (int u = 0; u < dfg->num_nodes(); u++) {
+        if (F.contains(u))
+            continue;
+        for (int v = 0; v < dfg->num_nodes(); v++) {
+            // check if v is in P(u)
+            if (!F.contains(v) && !F.intersects(dfg->pred(u), dfg->succ(v)) &&
+                !F.intersects(dfg->succ(u), dfg->pred(v)))
+                P.add(v);
+        }
+
+        // check if node u belongs to a previously computed equivalence class
+        int class_id = -1;
+        for (int i = 0; i < v_clusters_.size(); i++) {
+            if (P == v_clusters_[i].P()) {
+                class_id = i;
+                break;
+            }
+        }
+
+        if (class_id == -1) {
+            class_id = v_clusters_.size();
+            v_clusters_.emplace_back(P);
+        }
+        P.clear();
+        v_clusters_[class_id].nodes.push_back(u);
+        class_of[u] = class_id;
+    }
+
+    // build adjacency lists of clusters in the cluster graph
+    int num_clusters = v_clusters_.size();
+    Graph v_graph(num_clusters);
+
+    for (int i = 0; i < num_clusters; i++) {
+        int v = 0;
+        for (;;) {
+            v = v_clusters_[i].P().find_next(v);
+            if (v == -1)
+                break;
+            if (class_of[v] != i)
+                v_graph.add_edge(i, class_of[v]);
+            v++;
+        }
+    }
+
+    v_graph.invert();
+
+    fprintf(stderr, "NUM-CLUSTERS=%d\n", num_clusters);
+
+    mis_finder finder(&v_graph);
+    if (USE_BK)
+        num_in_ = num_out_ = 0;
+    else {
+        for (int i = 0; i < dfg->num_nodes(); i++)
+            if (!F.contains(i))
+                config_.add(i);
+        std::tie(num_in_, num_out_) = config_io(*dfg, config_);
+    }
+    auto stats = finder.visit(USE_BK,
+                              [this](const intset &) { this->add_config(); },
+                              [this](const intset &) { this->verify_config(); },
+                              [this](const intset &, int id, bool add) {
+                                  this->update_config(id, add);
+                              });
+    fprintf(stderr, "NUM-MVS-C=%d NUM-CALLS=%d\n", stats.first, stats.second);
+
+    s_clusters_ = scluster_enum(*dfg_);
+
+    int n = 0;
+    for (auto &cluster : s_clusters_)
+        n += cluster.nodes().size();
+    fprintf(stderr, "NUM-S-CLUSTER-NODES=%d\n", n);
+
+    std::sort(mvs_vec_.begin(),
+              mvs_vec_.end(),
+              [](const mvs &i1, const mvs &i2) {
+                  return i1.weight() > i2.weight();
+              });
+}
+
+io_analysis::io_analysis(mvs_finder &finder)
+    : finder_(&finder)
+{
+    for (auto &input : finder.inputs()) {
+        int v = input.first;
+        if (input_is_permanent(finder.dfg(),
+                               finder.config(),
+                               finder.nodes_left(),
+                               v)) {
+            input.second = INT_MAX;
+            num_perm_in_++;
+        } else {
+            input.second = 0;
+            for (auto &z : finder.dfg().out_edges(v)) {
+                if (finder.config().contains(z)) {
+                    double &value = rnodes_.add(z, 0);
+                    value++;
+                }
+            }
+        }
+    }
+
+    for (auto &input : finder.inputs()) {
+        int v = input.first;
+        if (input.second != INT_MAX) {
+            for (auto &z : finder.dfg().out_edges(v)) {
+                if (finder.config().contains(z)) {
+                    double &value = rnodes_.add(z, 0);
+#if 1
+                    input.second += 1. / value;
+#else
+                    if (value == 1)
+                        input.second++;
+#endif
+                }
+            }
+        }
+    }
+
+    for (auto &output : finder.outputs())
+        if (is_permanent(finder.dfg(),
+                         finder.config(),
+                         finder.nodes_left(),
+                         output))
+            num_perm_out_++;
+        else {
+            double &value = rnodes_.add(output, 0);
+            if (value >= 1)
+                num_shared_non_perm_out_++;
+        }
+}
+
+double io_analysis::best_input_weights(int n)
+{
+    std::sort(finder_->inputs().begin(),
+              finder_->inputs().end(),
+              [](const std::pair<int, double> p1,
+                 const std::pair<int, double> p2) {
+                  return p1.second < p2.second;
+              });
+    double sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += finder_->inputs()[i].second;
+    return sum;
+}
+
+double io_analysis::best_rnode_weights(int n)
+{
+    for (auto &entry : rnodes_)
+        entry.second = finder_->dfg().weight(entry.first);
+    std::sort(rnodes_.begin(),
+              rnodes_.end(),
+              [](const std::pair<int, double> p1,
+                 const std::pair<int, double> p2) {
+                  return p1.second < p2.second;
+              });
+    double sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += rnodes_[i].second;
+    return sum;
+}
