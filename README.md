@@ -11,7 +11,7 @@ Install **CMake** and use the included CMake script to build mvs:
 mkdir build
 cd build
 cmake <path/to/mvs>
-make
+cmake --build .
 ```
 The resulting binary is named **mvs**. The compilation requires a
 system (mostly) compliant with the POSIX.1-2001 standard and a **c++**
