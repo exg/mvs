@@ -64,7 +64,7 @@ struct vmap : std::vector<std::pair<T, U>> {
     {
         auto it = find(v);
         if (it == this->end())
-            it = this->insert(it, std::make_pair(v, data));
+            it = this->insert(it, { v, data });
         return (*it).second;
     }
 

@@ -45,7 +45,7 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
 
                 for (auto &v : dfg.out_edges(u)) {
                     if (vs[i].contains(v))
-                        edges.push_back(std::make_pair(u, v));
+                        edges.push_back({ u, v });
                     else
                         vo = u;
                 }
@@ -55,7 +55,7 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
 
                 for (auto &v : dfg.in_edges(u)) {
                     if (v >= dfg.num_nodes() || !vs[i].contains(v)) {
-                        edges.push_back(std::make_pair(v, u));
+                        edges.push_back({ v, u });
                         vi = v;
                     }
                 }
@@ -86,8 +86,8 @@ std::vector<s_cluster> snode_enum(const DFG &dfg,
 
             std::vector<int> nodes { i };
             std::vector<std::pair<int, int>> edges {
-                std::make_pair(pred, i),
-                std::make_pair(i, succ),
+                { pred, i },
+                { i, succ },
             };
             output.emplace_back(std::move(nodes), std::move(edges), pred, succ);
         }
