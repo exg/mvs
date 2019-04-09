@@ -9,8 +9,8 @@ public:
               std::vector<std::pair<int, int>> &&edges,
               int src,
               int dst)
-        : nodes_(nodes)
-        , edges_(edges)
+        : nodes_(std::move(nodes))
+        , edges_(std::move(edges))
         , src_(src)
         , dst_(dst)
     {
