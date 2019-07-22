@@ -14,6 +14,7 @@ static void read_data(void)
         assert(count == 1);
         elements[elem] = true;
     }
+    fclose(f);
 }
 
 int main()
