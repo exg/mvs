@@ -15,8 +15,7 @@
 
 #include "common.h"
 #include "graph.h"
-#include <string.h>
-#include <sys/time.h>
+#include <cstdio>
 #include <unistd.h>
 
 static void find_mis(Graph *graph, bool bk)

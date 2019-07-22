@@ -14,7 +14,6 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "vs.h"
-#include <stdio.h>
 
 static const bool VERIFY = false;
 
