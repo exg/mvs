@@ -5,7 +5,7 @@ enum { N = 128 };
 
 static bool elements[256];
 
-static void read_data(void)
+static void read_data()
 {
     FILE *f = fopen("/dev/urandom", "r");
     for (int i = 0; i < N; i++) {

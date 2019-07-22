@@ -19,9 +19,10 @@
 #include <climits>
 #include <memory>
 #include <stdexcept>
+#include <utility>
 
-DFG::DFG(const std::string &name, int num_nodes, int frequency)
-    : name_(name)
+DFG::DFG(std::string name, int num_nodes, int frequency)
+    : name_(std::move(name))
     , num_nodes_(num_nodes)
     , frequency_(frequency)
     , F_(num_nodes)
@@ -75,7 +76,7 @@ std::unique_ptr<DFG> DFG::make_dfg(std::istream &in, bool set_weights)
                 dfg->set_forbidden(id - 1);
 
             if (set_weights)
-                dfg->weight(id - 1) = strtod(fields[2].c_str(), 0);
+                dfg->weight(id - 1) = strtod(fields[2].c_str(), nullptr);
         }
     }
     double max_weight = 0;
@@ -101,10 +102,10 @@ void DFG::dfs_visit(int u, bool *visited, std::list<int> &topo_order)
 void DFG::index()
 {
     for (int i = 0; i < num_nodes_; i++) {
-        if (in_list_[i].size() == 0)
+        if (in_list_[i].empty())
             F_.add(i);
 
-        if (out_list_[i].size() == 0)
+        if (out_list_[i].empty())
             F_.add(i);
     }
 

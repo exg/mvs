@@ -37,6 +37,7 @@ static void test_hadamard(const char *path)
 
 int main(int argc, char **argv)
 {
+    assert(argc == 3);
     test_crypt(argv[1]);
     test_hadamard(argv[2]);
 }

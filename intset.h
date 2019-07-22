@@ -104,6 +104,7 @@ public:
 
     intset &add(unsigned n)
     {
+        assert(n < num_bits_);
         data_[block_index(n)] |= bit_mask(n);
         return *this;
     }
@@ -118,6 +119,7 @@ public:
 
     intset &remove(unsigned n)
     {
+        assert(n < num_bits_);
         data_[block_index(n)] &= ~bit_mask(n);
         return *this;
     }

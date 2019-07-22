@@ -15,11 +15,11 @@
 
 #include "common.h"
 #include "mvs.h"
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
+#include <cstdio>
 #include <unistd.h>
 
-static void print_mvsio(const DFG &dfg, const mvs &mvs)
+static void print_mvsio(const mvs &mvs)
 {
     fprintf(stdout,
             "MVS-CIO NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
@@ -125,13 +125,13 @@ int main(int argc, char *argv[])
 
     fprintf(stdout, "\n");
     for (auto &mvs : output) {
-        print_mvsio(*dfg, mvs);
+        print_mvsio(mvs);
         fprintf(stdout, "\n");
     }
     fprintf(stdout,
             "COUNT=%lu MAX-WEIGHT=%.2f TIME=%.2f\n",
             output.size(),
-            output.size() ? output[0].weight() : 0,
+            !output.empty() ? output[0].weight() : 0,
             end - start);
 
     return 0;

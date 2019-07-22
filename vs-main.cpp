@@ -15,8 +15,8 @@
 
 #include "common.h"
 #include "vs.h"
-#include <limits.h>
-#include <stdio.h>
+#include <climits>
+#include <cstdio>
 #include <unistd.h>
 
 static void print_mvsio(const DFG &dfg, const intset &config)

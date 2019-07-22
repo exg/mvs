@@ -45,7 +45,7 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
 
                 for (auto &v : dfg.out_edges(u)) {
                     if (vs[i].contains(v))
-                        edges.push_back({ u, v });
+                        edges.emplace_back(u, v);
                     else
                         vo = u;
                 }
@@ -55,7 +55,7 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
 
                 for (auto &v : dfg.in_edges(u)) {
                     if (v >= dfg.num_nodes() || !vs[i].contains(v)) {
-                        edges.push_back({ v, u });
+                        edges.emplace_back(v, u);
                         vi = v;
                     }
                 }

@@ -9,7 +9,7 @@
 
 class DFG {
 public:
-    DFG(const std::string &name, int num_nodes, int frequency);
+    DFG(std::string name, int num_nodes, int frequency);
     static std::unique_ptr<DFG> make_dfg(std::istream &in, bool set_weights);
     void index();
 

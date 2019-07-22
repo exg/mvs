@@ -19,7 +19,7 @@
 #include "vs.h"
 #include <cassert>
 #include <climits>
-#include <math.h>
+#include <cmath>
 
 static const bool USE_BK = false;
 static const bool VERIFY = false;
@@ -406,14 +406,14 @@ void mvs_finder::find_mvsio(mvs &mvs,
             if (dfg_->out_edges(cluster.src()).size() > 1)
                 s_node_input_delta = 0;
         }
-        std::sort(s_weights.begin(), s_weights.end(), std::greater<double>());
+        std::sort(s_weights.begin(), s_weights.end(), std::greater<>());
     }
 
     mvs.io_weight =
         find_mvsio_(mvs, single, max_io_weight, max_num_in, max_num_out);
     max_io_weight = std::max(max_io_weight, mvs.io_weight);
 
-    if (single && max_num_out > 1 && s_nodes_.size() > 0) {
+    if (single && max_num_out > 1 && !s_nodes_.empty()) {
         int m = std::min(max_num_out - 1, (int)s_nodes_.size());
         int _max_num_in = max_num_in;
         int _max_num_out = max_num_out;

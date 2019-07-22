@@ -6,13 +6,11 @@
 static void find_mis(Graph &graph, bool bk, unsigned count)
 {
     auto size = graph.num_nodes();
-    double start = get_time();
     mis_finder finder(&graph);
     auto stats = finder.visit(bk,
                               [size](const intset &name) {},
                               [](const intset &name) {},
                               [](const intset &name, int id, bool add) {});
-    double end = get_time();
     assert(stats.first == count);
 }
 
@@ -22,7 +20,7 @@ static void test(Graph &graph, unsigned count)
     find_mis(graph, true, count);
 }
 
-int main(int argc, char **argv)
+int main()
 {
     Graph graph(7);
     graph.add_edge(0, 4);

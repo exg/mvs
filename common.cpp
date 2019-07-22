@@ -14,13 +14,13 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common.h"
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <sys/time.h>
 
 bool parse_integer(const std::string &str, int &v, int a, int b)
 {
-    long lv = strtol(str.c_str(), NULL, 10);
+    long lv = strtol(str.c_str(), nullptr, 10);
     if (lv < a || lv > b)
         return false;
     v = lv;
@@ -46,7 +46,7 @@ std::vector<std::string> split(const std::string &s, char c)
 double get_time()
 {
     struct timeval tp;
-    gettimeofday(&tp, NULL);
+    gettimeofday(&tp, nullptr);
     return tp.tv_sec + tp.tv_usec * 1e-6;
 }
 

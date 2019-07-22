@@ -15,7 +15,7 @@
 
 #include "common.h"
 #include "vs.h"
-#include <stdio.h>
+#include <cstdio>
 
 void vs_io(const DFG &dfg, const intset &nodes, int &num_in, int &num_out)
 {
