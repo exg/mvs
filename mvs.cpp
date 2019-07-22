@@ -568,7 +568,8 @@ void mvs_finder::update_config(int id, bool add)
     }
 }
 
-static void dump_v_graph(Graph &v_graph, std::vector<v_cluster> &v_clusters)
+static void dump_v_graph(const Graph &v_graph,
+                         const std::vector<v_cluster> &v_clusters)
 {
     for (unsigned i = 0; i < v_clusters.size(); i++) {
         fprintf(stderr,
@@ -585,7 +586,7 @@ static void dump_v_graph(Graph &v_graph, std::vector<v_cluster> &v_clusters)
     }
 }
 
-static void dump_s_clusters(std::vector<s_cluster> &s_clusters)
+static void dump_s_clusters(const std::vector<s_cluster> &s_clusters)
 {
     for (auto &cluster : s_clusters) {
         fprintf(stderr,

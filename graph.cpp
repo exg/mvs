@@ -151,9 +151,9 @@ void mis_finder::visit_()
     nodes_left_.add(id);
 }
 
-static void find_pivot(Graph &graph,
-                       intset &S,
-                       intset &P,
+static void find_pivot(const Graph &graph,
+                       const intset &S,
+                       const intset &P,
                        int &best_id,
                        int &best_score)
 {
