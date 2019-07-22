@@ -1,0 +1,11 @@
+Checks: '
+  bugprone-*,
+  cert-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -readability-braces-around-statements,
+  -readability-else-after-return,
+  -readability-implicit-bool-conversion,
+'
