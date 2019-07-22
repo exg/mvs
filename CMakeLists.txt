@@ -1,5 +1,6 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
 find_package(nlohmann_json REQUIRED)
 link_libraries(nlohmann_json::nlohmann_json)
