@@ -19,13 +19,13 @@
 #include <cstdio>
 #include <unistd.h>
 
-static void print_mvsio(const mvs &mvs)
+static void print_mvsio(const io_config &mvs)
 {
     fprintf(stdout,
             "MVS-CIO NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
             mvs.num_in(),
             mvs.num_out());
-    dump_intset(mvs.config(), stdout);
+    dump_intset(mvs.nodes(), stdout);
 }
 
 static bool parse_flags(const std::string &str, uint8_t &flags)

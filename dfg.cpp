@@ -139,39 +139,58 @@ void DFG::index()
     }
 }
 
-double config_weight(const DFG &dfg, const intset &config)
+intset config::pred() const
 {
-    double weight = 0;
+    intset out(dfg_->num_nodes());
     int u = 0;
     for (;;) {
-        u = config.find_next(u);
+        u = nodes_.find_next(u);
         if (u == -1)
             break;
 
-        weight += dfg.weight(u);
+        out.add_difference(dfg_->pred(u), nodes_);
         u++;
     }
-    return weight;
+
+    return out;
 }
 
-std::tuple<int, int> config_io(const DFG &dfg, const intset &config)
+intset config::succ() const
 {
-    int num_in = 0;
-    int num_out = 0;
-
-    int id = 0;
+    intset out(dfg_->num_nodes());
+    int u = 0;
     for (;;) {
-        bool input;
-        int i = io_iter_next(dfg, config, id, input);
-        if (i == -1)
+        u = nodes_.find_next(u);
+        if (u == -1)
             break;
 
-        if (input)
-            num_in++;
-        else
-            num_out++;
+        out.add_difference(dfg_->succ(u), nodes_);
+        u++;
     }
-    return { num_in, num_out };
+
+    return out;
+}
+
+intset config::closure() const
+{
+    auto out = pred();
+    out.intersect(succ());
+    out.add(nodes_);
+    return out;
+}
+
+void io_config::init_weight()
+{
+    weight_ = 0;
+    int u = 0;
+    for (;;) {
+        u = nodes_.find_next(u);
+        if (u == -1)
+            break;
+
+        weight_ += dfg_->weight(u);
+        u++;
+    }
 }
 
 // true iff at least one successor of 'u' different from 'z' belongs
@@ -202,61 +221,77 @@ static bool has_external_successor(const DFG &dfg,
     return false;
 }
 
-int io_iter_next(const DFG &dfg, const intset &config, int &id, bool &input)
+static const bool VERIFY = false;
+
+void io_config::init_io()
 {
-    bool output = false;
-    input = false;
+    inputs_.clear();
+    outputs_.clear();
 
-    while (id < dfg.num_nodes()) {
-        if (id >= dfg.num_nodes() || !config.contains(id))
-            input = has_internal_successor(dfg, config, id, id);
-        else
-            output = has_external_successor(dfg, config, id, id);
-        if (input || output)
-            return id++;
-        id++;
+    for (int i = 0; i < dfg_->num_nodes(); i++) {
+        if (!nodes_.contains(i)) {
+            if (has_internal_successor(*dfg_, nodes_, i, i))
+                inputs_.add(i);
+        } else {
+            if (has_external_successor(*dfg_, nodes_, i, i))
+                outputs_.add(i);
+        }
     }
-
-    return -1;
 }
 
-int io_delta_iter::next(bool &input, bool &add)
+void io_config::update_io(int u, bool add)
 {
-    if (state_ == 0) {
-        state_++;
-        if (has_internal_successor(*dfg_, *config_, u_, u_)) {
-            input = true;
-            add = !add_;
-            return u_;
-        }
+    if (has_internal_successor(*dfg_, nodes_, u, u)) {
+        if (!add)
+            inputs_.add(u);
+        else
+            inputs_.remove(u);
     }
 
-    if (state_ == 1) {
-        state_++;
-        if (has_external_successor(*dfg_, *config_, u_, u_)) {
-            input = false;
-            add = add_;
-            return u_;
-        }
+    if (has_external_successor(*dfg_, nodes_, u, u)) {
+        if (add)
+            outputs_.add(u);
+        else
+            outputs_.remove(u);
     }
 
-    while (state_ - 2 < dfg_->in_edges(u_).size()) {
-        auto v = dfg_->in_edges(u_)[state_ - 2];
-        state_++;
-        if (v >= dfg_->num_nodes() || !config_->contains(v)) {
-            if (!has_internal_successor(*dfg_, *config_, v, u_)) {
-                input = true;
-                add = add_;
-                return v;
+    for (auto &v : dfg_->in_edges(u)) {
+        if (v >= dfg_->num_nodes() || !nodes_.contains(v)) {
+            if (!has_internal_successor(*dfg_, nodes_, v, u)) {
+                if (add)
+                    inputs_.add(v);
+                else
+                    inputs_.remove(v);
             }
         } else {
-            if (!has_external_successor(*dfg_, *config_, v, u_)) {
-                input = false;
-                add = !add_;
-                return v;
+            if (!has_external_successor(*dfg_, nodes_, v, u)) {
+                if (!add)
+                    outputs_.add(v);
+                else
+                    outputs_.remove(v);
             }
         }
     }
 
-    return -1;
+    if (VERIFY) {
+        vset<int> inputs;
+        vset<int> outputs;
+        for (int i = 0; i < dfg_->num_nodes(); i++) {
+            if (!nodes_.contains(i)) {
+                if (has_internal_successor(*dfg_, nodes_, i, i))
+                    inputs.add(i);
+            } else {
+                if (has_external_successor(*dfg_, nodes_, i, i))
+                    outputs.add(i);
+            }
+        }
+        assert(inputs_.size() == inputs.size() &&
+               outputs_.size() == outputs.size());
+        for (auto &input : inputs)
+            assert(std::find(inputs_.begin(), inputs_.end(), input) !=
+                   inputs_.end());
+        for (auto &output : outputs)
+            assert(std::find(outputs_.begin(), outputs_.end(), output) !=
+                   outputs_.end());
+    }
 }

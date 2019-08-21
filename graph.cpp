@@ -52,7 +52,6 @@ std::unique_ptr<Graph> Graph::make_graph(std::istream &in)
 std::pair<unsigned, unsigned> mis_finder::visit(
     bool use_bk,
     const std::function<void(const intset &)> &output_cb,
-    const std::function<void(const intset &)> &verify_cb,
     const std::function<void(const intset &, int, bool)> &update_cb)
 {
     auto size = graph_->num_nodes();
@@ -62,7 +61,6 @@ std::pair<unsigned, unsigned> mis_finder::visit(
     count_ = 0;
     calls_ = 0;
     output_cb_ = output_cb;
-    verify_cb_ = verify_cb;
     update_cb_ = update_cb;
     for (int i = 0; i < size; i++)
         nodes_left_.add(i);
@@ -85,8 +83,6 @@ void mis_finder::visit_()
         count_++;
         return;
     }
-
-    verify_cb_(config_);
 
     bool prune;
     bool is_f_node = false;
@@ -186,8 +182,6 @@ void mis_finder::bk_visit_()
         count_++;
         return;
     }
-
-    verify_cb_(config_);
 
     intset P(nodes_left_);
     intset X(f_nodes_);

@@ -17,25 +17,6 @@
 #include "vs.h"
 #include <cstdio>
 
-void vs_io(const DFG &dfg, const intset &nodes, int &num_in, int &num_out)
-{
-    num_in = 0;
-    num_out = 0;
-
-    int id = 0;
-    for (;;) {
-        bool input;
-        int i = io_iter_next(dfg, nodes, id, input);
-        if (i == -1)
-            break;
-
-        if (input)
-            num_in++;
-        else
-            num_out++;
-    }
-}
-
 int main(int argc, char *argv[])
 {
     if (argc < 2) {
@@ -45,7 +26,7 @@ int main(int argc, char *argv[])
 
     std::unique_ptr<DFG> dfg = DFG::make_dfg(std::cin, false);
 
-    intset config(dfg->num_nodes());
+    io_config config(*dfg);
     for (auto &field : split(std::string(argv[1]), ' ')) {
         int v;
         if (!parse_integer(field, v, 0, dfg->num_nodes() - 1)) {
@@ -55,16 +36,14 @@ int main(int argc, char *argv[])
         config.add(v);
     }
 
-    int num_in, num_out;
-    vs_io(*dfg, config, num_in, num_out);
     fprintf(stdout,
             "CONFIG NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-            num_in,
-            num_out);
-    dump_intset(config, stdout);
-    intset closure = config_closure(*dfg, config);
-    fprintf(stdout, "CONVEX=%d\n", config == closure);
-    fprintf(stdout, "VALID=%d\n", !config.intersects(dfg->forbidden()));
+            config.num_in(),
+            config.num_out());
+    dump_intset(config.nodes(), stdout);
+    intset closure = config.closure();
+    fprintf(stdout, "CONVEX=%d\n", config.nodes() == closure);
+    fprintf(stdout, "VALID=%d\n", !config.nodes().intersects(dfg->forbidden()));
 
     return 0;
 }

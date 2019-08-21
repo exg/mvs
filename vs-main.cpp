@@ -19,15 +19,13 @@
 #include <cstdio>
 #include <unistd.h>
 
-static void print_mvsio(const DFG &dfg, const intset &config)
+static void print_mvsio(const io_config &config)
 {
-    int num_in, num_out;
-    std::tie(num_in, num_out) = config_io(dfg, config);
     fprintf(stdout,
             "MVS-CIO NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-            num_in,
-            num_out);
-    dump_intset(config, stdout);
+            config.num_in(),
+            config.num_out());
+    dump_intset(config.nodes(), stdout);
 }
 
 int main(int argc, char *argv[])
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
 
     fprintf(stdout, "\n");
     for (auto &config : output) {
-        print_mvsio(*dfg, config);
+        print_mvsio(config);
         fprintf(stdout, "\n");
     }
     fprintf(stdout,

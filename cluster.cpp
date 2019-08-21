@@ -16,10 +16,10 @@
 #include "cluster.h"
 #include "vs.h"
 
-static bool is_maximal(const std::vector<intset> &vs, int i)
+static bool is_maximal(const std::vector<io_config> &vs, int i)
 {
     for (int j = 0; j < vs.size(); j++) {
-        if (j != i && vs[i].is_subset_of(vs[j]))
+        if (j != i && vs[i].nodes().is_subset_of(vs[j].nodes()))
             return false;
     }
     return true;
@@ -32,29 +32,29 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
     auto vs = vs_enum(dfg, true, 1, 1, max_weight);
 
     for (int i = 0; i < vs.size(); i++) {
-        if (vs[i].size() > 1 && is_maximal(vs, i)) {
-            std::vector<int> nodes;
+        if (vs[i].nodes().size() > 1 && is_maximal(vs, i)) {
+            std::vector<std::pair<int, double>> nodes;
             std::vector<std::pair<int, int>> edges;
             int vi = -1;
             int vo = -1;
             int u = 0;
             for (;;) {
-                u = vs[i].find_next(u);
+                u = vs[i].nodes().find_next(u);
                 if (u == -1)
                     break;
 
                 for (auto &v : dfg.out_edges(u)) {
-                    if (vs[i].contains(v))
+                    if (vs[i].nodes().contains(v))
                         edges.emplace_back(u, v);
                     else
                         vo = u;
                 }
 
                 if (u != vo)
-                    nodes.push_back(u);
+                    nodes.emplace_back(u, dfg.weight(u));
 
                 for (auto &v : dfg.in_edges(u)) {
-                    if (v >= dfg.num_nodes() || !vs[i].contains(v)) {
+                    if (v >= dfg.num_nodes() || !vs[i].nodes().contains(v)) {
                         edges.emplace_back(v, u);
                         vi = v;
                     }
@@ -84,7 +84,7 @@ std::vector<s_cluster> snode_enum(const DFG &dfg,
             int pred = dfg.in_edges(i)[0];
             int succ = dfg.out_edges(i)[0];
 
-            std::vector<int> nodes { i };
+            std::vector<std::pair<int, double>> nodes { { i, dfg.weight(i) } };
             std::vector<std::pair<int, int>> edges {
                 { pred, i },
                 { i, succ },

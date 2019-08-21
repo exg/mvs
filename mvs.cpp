@@ -18,11 +18,9 @@
 #include "graph.h"
 #include "vs.h"
 #include <cassert>
-#include <climits>
 #include <cmath>
 
 static const bool USE_BK = false;
-static const bool VERIFY = false;
 
 static bool is_source(const DFG &dfg, const intset &config, int u)
 {
@@ -68,80 +66,6 @@ static bool input_is_permanent(const DFG &dfg,
     return false;
 }
 
-static void mvs_update_io(const DFG &dfg,
-                          const intset &nodes,
-                          int u,
-                          bool add,
-                          int &num_in,
-                          int &num_out)
-{
-    io_delta_iter iter(dfg, nodes, u, add);
-    for (;;) {
-        bool input;
-        bool add;
-        int v = iter.next(input, add);
-        if (v == -1)
-            break;
-
-        int inc = add ? 1 : -1;
-        if (input)
-            num_in += inc;
-        else
-            num_out += inc;
-    }
-}
-
-static void mvs_update_io(const DFG &dfg,
-                          const intset &nodes,
-                          int u,
-                          bool add,
-                          vmap<int, double> &inputs,
-                          vset<int> &outputs)
-{
-    io_delta_iter iter(dfg, nodes, u, add);
-    for (;;) {
-        bool input;
-        bool add;
-        int v = iter.next(input, add);
-        if (v == -1)
-            break;
-
-        if (input) {
-            if (add)
-                inputs.add(v, 0);
-            else
-                inputs.remove(v);
-        } else {
-            if (add)
-                outputs.add(v);
-            else
-                outputs.remove(v);
-        }
-    }
-}
-
-static void mvs_io(const DFG &dfg,
-                   const intset &nodes,
-                   vmap<int, double> &inputs,
-                   vset<int> &outputs)
-{
-    inputs.clear();
-    outputs.clear();
-
-    int id = 0;
-    for (;;) {
-        bool input;
-        int i = io_iter_next(dfg, nodes, id, input);
-        if (i == -1)
-            break;
-
-        if (input)
-            inputs.add(i, 0);
-        else
-            outputs.add(i);
-    }
-}
-
 int mvs_finder::find_best_recursion_node(int max_num_in,
                                          int max_num_out,
                                          int num_perm_in,
@@ -155,19 +79,18 @@ int mvs_finder::find_best_recursion_node(int max_num_in,
         if (u == -1)
             break;
 
-        bool source = is_source(*dfg_, config_, u);
-        bool sink = is_sink(*dfg_, config_, u);
+        bool source = is_source(*dfg_, nodes(), u);
+        bool sink = is_sink(*dfg_, nodes(), u);
 
         if (source || sink) {
             std::pair<int, int> delta(0, 0);
             nodes_left_.remove(u);
-            for (auto &input : inputs_) {
-                int v = input.first;
-                if (input_is_permanent(*dfg_, config_, nodes_left_, v))
+            for (auto &v : config_.inputs()) {
+                if (input_is_permanent(*dfg_, nodes(), nodes_left_, v))
                     delta.first++;
             }
-            for (auto &output : outputs_)
-                if (is_permanent(*dfg_, config_, nodes_left_, output))
+            for (auto &output : config_.outputs())
+                if (is_permanent(*dfg_, nodes(), nodes_left_, output))
                     delta.second++;
             nodes_left_.add(u);
 
@@ -198,21 +121,8 @@ void mvs_finder::visit(double dels,
     if (dels < 0 || (count_ && single))
         return;
 
-    if (VERIFY) {
-        vmap<int, double> inputs;
-        vset<int> outputs;
-        mvs_io(*dfg_, config_, inputs, outputs);
-        assert(inputs_.size() == inputs.size() &&
-               outputs_.size() == outputs.size());
-        for (auto &input : inputs)
-            assert(inputs_.find(input.first) != inputs_.end());
-        for (auto &output : outputs)
-            assert(std::find(outputs_.begin(), outputs_.end(), output) !=
-                   outputs_.end());
-    }
-
-    if (inputs_.size() <= max_num_in && outputs_.size() <= max_num_out) {
-        double weight = config_weight(*dfg_, config_);
+    if (config_.num_in() <= max_num_in && config_.num_out() <= max_num_out) {
+        double weight = config_.weight();
         int iweight = weight;
         for (auto &cluster : s_clusters_)
             cluster.expand(config_);
@@ -225,14 +135,11 @@ void mvs_finder::visit(double dels,
         } else if (iweight == max_weight) {
             if (std::find_if(io_output_->begin(),
                              io_output_->end(),
-                             [this](const mvs &mvs) {
-                                 return mvs.config() == this->config_;
+                             [this](const io_config &mvs) {
+                                 return mvs.nodes() == this->nodes();
                              }) == io_output_->end()) {
                 count_++;
-                io_output_->emplace_back(config_,
-                                         inputs_.size(),
-                                         outputs_.size(),
-                                         weight);
+                io_output_->emplace_back(config_);
             }
         }
 
@@ -249,8 +156,8 @@ void mvs_finder::visit(double dels,
     bool prune = false;
     int required_dels_in = 0;
     int required_dels_out = 0;
-    if (inputs_.size() - max_num_in > 0) {
-        size_t n = inputs_.size() - max_num_in;
+    if (config_.num_in() - max_num_in > 0) {
+        size_t n = config_.num_in() - max_num_in;
         if (analysis.num_perm_in() > max_num_in) {
             if (flags_ & (1 << 1)) {
                 pruned_[0]++;
@@ -260,14 +167,14 @@ void mvs_finder::visit(double dels,
             required_dels_in = ceil(analysis.best_input_weights(n));
         }
     }
-    if (outputs_.size() - max_num_out > 0) {
+    if (config_.num_out() - max_num_out > 0) {
         if (analysis.num_perm_out() > max_num_out) {
             if (flags_ & (1 << 2)) {
                 pruned_[1]++;
                 prune = true;
             }
         } else
-            required_dels_out = outputs_.size() - max_num_out;
+            required_dels_out = config_.num_out() - max_num_out;
     }
 
     int num_shared_non_perm_out = std::min({
@@ -299,11 +206,9 @@ void mvs_finder::visit(double dels,
     nodes_left_.remove(id);
 
     config_.remove(id);
-    mvs_update_io(*dfg_, config_, id, false, inputs_, outputs_);
     visit(dels - dfg_->weight(id), single, max_weight, max_num_in, max_num_out);
 
     config_.add(id);
-    mvs_update_io(*dfg_, config_, id, true, inputs_, outputs_);
     visit(dels, single, max_weight, max_num_in, max_num_out);
 
     nodes_left_.add(id);
@@ -315,11 +220,9 @@ int mvs_finder::find_mvsio_(mvs &mvs,
                             int max_num_in,
                             int max_num_out)
 {
-    config_.clear();
-    config_.add_difference(mvs.config(), collapsed_);
-    nodes_left_ = config_;
-
-    mvs_io(*dfg_, config_, inputs_, outputs_);
+    nodes_left_.clear();
+    nodes_left_.add_difference(mvs.nodes(), collapsed_);
+    config_.set(nodes_left_);
 
     int iweight = ceil(mvs.weight());
     int max_dels = iweight - max_io_weight;
@@ -398,11 +301,11 @@ void mvs_finder::find_mvsio(mvs &mvs,
     std::vector<double> s_weights;
     int s_node_input_delta = 1;
     if (single || !mvs.disconnected) {
-        s_nodes_ = snode_enum(*dfg_, mvs.config(), s_clusters_);
+        s_nodes_ = snode_enum(*dfg_, mvs.nodes(), s_clusters_);
         fprintf(stderr, "NUM-S-NODES=%lu\n", s_nodes_.size());
         for (auto &cluster : s_nodes_) {
             link_cluster(cluster);
-            s_weights.push_back(dfg_->weight(cluster.nodes().front()));
+            s_weights.push_back(dfg_->weight(cluster.nodes().front().first));
             if (dfg_->out_edges(cluster.src()).size() > 1)
                 s_node_input_delta = 0;
         }
@@ -454,10 +357,10 @@ void mvs_finder::find_mvsio(mvs &mvs,
         unlink_cluster(cluster);
 }
 
-std::vector<mvs> mvs_finder::mvs_enum(int max_num_in,
-                                      int max_num_out,
-                                      iter_type itype,
-                                      uint8_t flags)
+std::vector<io_config> mvs_finder::mvs_enum(int max_num_in,
+                                            int max_num_out,
+                                            iter_type itype,
+                                            uint8_t flags)
 {
     itype_ = itype;
     flags_ = flags;
@@ -467,7 +370,7 @@ std::vector<mvs> mvs_finder::mvs_enum(int max_num_in,
             max_num_out);
     fprintf(stderr, "OPTS=%x\n", flags_);
 
-    std::vector<mvs> output;
+    std::vector<io_config> output;
     io_output_ = &output;
     int max_io_weight = 0;
     for (auto &mvsc : mvs_vec_) {
@@ -476,7 +379,7 @@ std::vector<mvs> mvs_finder::mvs_enum(int max_num_in,
                 "mvs-c NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
                 mvsc.num_in(),
                 mvsc.num_out());
-        dump_intset(mvsc.config(), stderr);
+        dump_intset(mvsc.nodes(), stderr);
         fprintf(stderr, "WEIGHT=%f\n", mvsc.weight());
 
         int m = flags_ & (1 << 5) ? max_io_weight : 0;
@@ -497,14 +400,11 @@ std::vector<mvs> mvs_finder::mvs_enum(int max_num_in,
                     "\nMVS-C NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
                     mvsc.num_in(),
                     mvsc.num_out());
-            dump_intset(mvsc.config(), stderr);
+            dump_intset(mvsc.nodes(), stderr);
             if (mvsc.io_weight < mvsc.weight())
                 find_mvsio(mvsc, false, max_io_weight, max_num_in, max_num_out);
             else
-                io_output_->emplace_back(mvsc.config(),
-                                         mvsc.num_in(),
-                                         mvsc.num_out(),
-                                         mvsc.weight());
+                io_output_->emplace_back(mvsc);
         }
     }
 
@@ -528,8 +428,9 @@ void mvs_finder::link_cluster(const s_cluster &cluster)
         dfg_->remove_edge(edge.first, edge.second);
     dfg_->add_edge(cluster.src(), cluster.dst());
     for (auto &node : cluster.nodes()) {
-        collapsed_.add(node);
-        dfg_->weight(cluster.dst()) += dfg_->weight(node);
+        collapsed_.add(node.first);
+        dfg_->weight(cluster.dst()) += node.second;
+        dfg_->weight(node.first) = 0;
     }
 }
 
@@ -539,22 +440,15 @@ void mvs_finder::unlink_cluster(const s_cluster &cluster)
     for (auto &edge : cluster.edges())
         dfg_->add_edge(edge.first, edge.second);
     for (auto &node : cluster.nodes()) {
-        collapsed_.remove(node);
-        dfg_->weight(cluster.dst()) -= dfg_->weight(node);
+        collapsed_.remove(node.first);
+        dfg_->weight(cluster.dst()) -= node.second;
+        dfg_->weight(node.first) = node.second;
     }
 }
 
 void mvs_finder::add_config()
 {
-    double weight = config_weight(*dfg_, config_);
-    mvs_vec_.emplace_back(config_, num_in_, num_out_, weight);
-}
-
-void mvs_finder::verify_config()
-{
-    int num_in, num_out;
-    std::tie(num_in, num_out) = config_io(*dfg_, config_);
-    assert(num_in_ == num_in && num_out_ == num_out);
+    mvs_vec_.emplace_back(config_);
 }
 
 void mvs_finder::update_config(int id, bool add)
@@ -564,7 +458,6 @@ void mvs_finder::update_config(int id, bool add)
             config_.add(v);
         else
             config_.remove(v);
-        mvs_update_io(*dfg_, config_, v, add, num_in_, num_out_);
     }
 }
 
@@ -595,7 +488,7 @@ static void dump_s_clusters(const std::vector<s_cluster> &s_clusters)
                 cluster.dst());
         fprintf(stderr, "\n  NODES=");
         for (auto &node : cluster.nodes())
-            fprintf(stderr, "%d ", node);
+            fprintf(stderr, "%d ", node.first);
         fprintf(stderr, "\n  EDGES=");
         for (auto &edge : cluster.edges())
             fprintf(stderr, "(%d, %d) ", edge.first, edge.second);
@@ -605,7 +498,7 @@ static void dump_s_clusters(const std::vector<s_cluster> &s_clusters)
 
 mvs_finder::mvs_finder(DFG *dfg)
     : dfg_(dfg)
-    , config_(dfg->num_nodes())
+    , config_(*dfg)
     , nodes_left_(dfg->num_nodes())
     , collapsed_(dfg->num_nodes())
 {
@@ -662,17 +555,13 @@ mvs_finder::mvs_finder(DFG *dfg)
     fprintf(stderr, "NUM-CLUSTERS=%d\n", num_clusters);
 
     mis_finder finder(&v_graph);
-    if (USE_BK)
-        num_in_ = num_out_ = 0;
-    else {
+    if (!USE_BK) {
         for (int i = 0; i < dfg->num_nodes(); i++)
             if (!F.contains(i))
                 config_.add(i);
-        std::tie(num_in_, num_out_) = config_io(*dfg, config_);
     }
     auto stats = finder.visit(USE_BK,
                               [this](const intset &) { this->add_config(); },
-                              [this](const intset &) { this->verify_config(); },
                               [this](const intset &, int id, bool add) {
                                   this->update_config(id, add);
                               });
@@ -687,26 +576,24 @@ mvs_finder::mvs_finder(DFG *dfg)
 
     std::sort(mvs_vec_.begin(),
               mvs_vec_.end(),
-              [](const mvs &i1, const mvs &i2) {
+              [](const io_config &i1, const io_config &i2) {
                   return i1.weight() > i2.weight();
               });
 }
 
-io_analysis::io_analysis(mvs_finder &finder)
+io_analysis::io_analysis(const mvs_finder &finder)
     : finder_(&finder)
 {
-    for (auto &input : finder.inputs()) {
-        int v = input.first;
+    for (auto &v : finder.inputs()) {
         if (input_is_permanent(finder.dfg(),
-                               finder.config(),
+                               finder.nodes(),
                                finder.nodes_left(),
                                v)) {
-            input.second = INT_MAX;
             num_perm_in_++;
         } else {
-            input.second = 0;
+            inputs_.add(v, 0);
             for (auto &z : finder.dfg().out_edges(v)) {
-                if (finder.config().contains(z)) {
+                if (finder.nodes().contains(z)) {
                     double &value = rnodes_.add(z, 0);
                     value++;
                 }
@@ -714,26 +601,24 @@ io_analysis::io_analysis(mvs_finder &finder)
         }
     }
 
-    for (auto &input : finder.inputs()) {
+    for (auto &input : inputs_) {
         int v = input.first;
-        if (input.second != INT_MAX) {
-            for (auto &z : finder.dfg().out_edges(v)) {
-                if (finder.config().contains(z)) {
-                    double &value = rnodes_.add(z, 0);
+        for (auto &z : finder.dfg().out_edges(v)) {
+            if (finder.nodes().contains(z)) {
+                double &value = rnodes_.add(z, 0);
 #if 1
-                    input.second += 1. / value;
+                input.second += 1. / value;
 #else
-                    if (value == 1)
-                        input.second++;
+                if (value == 1)
+                    input.second++;
 #endif
-                }
             }
         }
     }
 
     for (auto &output : finder.outputs())
         if (is_permanent(finder.dfg(),
-                         finder.config(),
+                         finder.nodes(),
                          finder.nodes_left(),
                          output))
             num_perm_out_++;
@@ -746,15 +631,15 @@ io_analysis::io_analysis(mvs_finder &finder)
 
 double io_analysis::best_input_weights(int n)
 {
-    std::sort(finder_->inputs().begin(),
-              finder_->inputs().end(),
+    std::sort(inputs_.begin(),
+              inputs_.end(),
               [](const std::pair<int, double> p1,
                  const std::pair<int, double> p2) {
                   return p1.second < p2.second;
               });
     double sum = 0;
     for (int i = 0; i < n; i++)
-        sum += finder_->inputs()[i].second;
+        sum += inputs_[i].second;
     return sum;
 }
 

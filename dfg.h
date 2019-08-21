@@ -54,26 +54,77 @@ private:
     intset F_;
 };
 
-double config_weight(const DFG &dfg, const intset &config);
-std::tuple<int, int> config_io(const DFG &dfg, const intset &config);
-int io_iter_next(const DFG &dfg, const intset &config, int &id, bool &input);
-
-class io_delta_iter {
+class config {
 public:
-    io_delta_iter(const DFG &dfg, const intset &config, int u, bool add)
+    config(const DFG &dfg)
         : dfg_(&dfg)
-        , config_(&config)
-        , u_(u)
-        , add_(add)
-        , state_(0)
+        , nodes_(dfg_->num_nodes())
     {
     }
-    int next(bool &input, bool &add);
+    config(const DFG &dfg, const intset &&nodes)
+        : dfg_(&dfg)
+        , nodes_(std::move(nodes))
+    {
+    }
+
+    void add(int u) { nodes_.add(u); }
+    void remove(int u) { nodes_.remove(u); }
+
+    const intset &nodes() const { return nodes_; }
+    intset pred() const;
+    intset succ() const;
+    intset closure() const;
+
+protected:
+    const DFG *dfg_;
+    intset nodes_;
+};
+
+class io_config : public config {
+public:
+    io_config(const DFG &dfg)
+        : config(dfg)
+    {
+        static_assert(std::is_nothrow_move_constructible<io_config>::value, "");
+    }
+
+    io_config(const DFG &dfg, const intset &&nodes)
+        : config(dfg, std::move(nodes))
+    {
+        init_io();
+        init_weight();
+    }
+
+    const vset<int> &inputs() const { return inputs_; }
+    const vset<int> &outputs() const { return outputs_; }
+    int num_in() const { return inputs_.size(); }
+    int num_out() const { return outputs_.size(); }
+    double weight() const { return weight_; }
+    void set(const intset &nodes)
+    {
+        nodes_ = nodes;
+        init_io();
+        init_weight();
+    }
+    void add(int u)
+    {
+        nodes_.add(u);
+        update_io(u, true);
+        weight_ += dfg_->weight(u);
+    }
+    void remove(int u)
+    {
+        nodes_.remove(u);
+        update_io(u, false);
+        weight_ -= dfg_->weight(u);
+    }
 
 private:
-    const DFG *dfg_;
-    const intset *config_;
-    int u_;
-    bool add_;
-    int state_;
+    void init_weight();
+    void init_io();
+    void update_io(int u, bool add);
+
+    vset<int> inputs_;
+    vset<int> outputs_;
+    double weight_ = 0;
 };

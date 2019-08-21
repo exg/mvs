@@ -88,7 +88,6 @@ public:
     std::pair<unsigned, unsigned> visit(
         bool use_bk,
         const std::function<void(const intset &)> &output_cb,
-        const std::function<void(const intset &)> &verify_cb,
         const std::function<void(const intset &, int, bool)> &update_cb);
 
 private:
@@ -96,7 +95,6 @@ private:
     void bk_visit_();
 
     std::function<void(const intset &)> output_cb_;
-    std::function<void(const intset &)> verify_cb_;
     std::function<void(const intset &, int, bool)> update_cb_;
 
     Graph *graph_;

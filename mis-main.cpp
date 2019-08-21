@@ -25,7 +25,6 @@ static void find_mis(Graph *graph, bool bk)
     mis_finder finder(graph);
     auto stats = finder.visit(bk,
                               [size](const intset &name) {},
-                              [](const intset &name) {},
                               [](const intset &name, int id, bool add) {});
     double end = get_time();
     fprintf(stdout,

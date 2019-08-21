@@ -5,7 +5,7 @@
 
 class s_cluster {
 public:
-    s_cluster(std::vector<int> &&nodes,
+    s_cluster(std::vector<std::pair<int, double>> &&nodes,
               std::vector<std::pair<int, int>> &&edges,
               int src,
               int dst)
@@ -17,27 +17,27 @@ public:
         static_assert(std::is_nothrow_move_constructible<s_cluster>::value, "");
     }
 
-    void expand(intset &config) const
+    void expand(io_config &config) const
     {
-        if (config.contains(dst_))
+        if (config.nodes().contains(dst_))
             for (auto &node : nodes_)
-                config.add(node);
+                config.add(node.first);
     }
 
-    void contract(intset &config) const
+    void contract(io_config &config) const
     {
-        if (config.contains(dst_))
+        if (config.nodes().contains(dst_))
             for (auto &node : nodes_)
-                config.remove(node);
+                config.remove(node.first);
     }
 
     int src() const { return src_; }
     int dst() const { return dst_; }
-    const std::vector<int> &nodes() const { return nodes_; }
+    const std::vector<std::pair<int, double>> &nodes() const { return nodes_; }
     const std::vector<std::pair<int, int>> &edges() const { return edges_; }
 
 private:
-    std::vector<int> nodes_;
+    std::vector<std::pair<int, double>> nodes_;
     std::vector<std::pair<int, int>> edges_;
     int src_;
     int dst_;
