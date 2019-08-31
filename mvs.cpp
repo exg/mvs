@@ -612,7 +612,7 @@ mvs_finder::mvs_finder(DFG *dfg)
     // compute P sets and equivalence classes
     auto class_of = std::make_unique<int[]>(dfg->num_nodes());
     intset P(dfg->num_nodes());
-    auto F = dfg->forbidden();
+    auto &F = dfg->forbidden();
     for (int u = 0; u < dfg->num_nodes(); u++) {
         if (F.contains(u))
             continue;
