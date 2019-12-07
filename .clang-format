@@ -11,6 +11,7 @@ BraceWrapping:
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
 ColumnLimit: 80
+Cpp11BracedListStyle: true
 IndentCaseLabels: true
 IndentWidth: 4
 PenaltyBreakBeforeFirstCallParameter: 300

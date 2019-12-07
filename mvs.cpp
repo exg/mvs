@@ -226,12 +226,15 @@ int mvs_finder::find_mvsio_(mvs &mvs,
 
     int iweight = ceil(mvs.weight());
     int max_dels = iweight - max_io_weight;
+    nlohmann::json json = {
+        {"connected", !mvs.disconnected},
+        {"enum", !single},
+        {"num_inputs", max_num_in},
+        {"num_outputs", max_num_out},
+        {"num_s-nodes", s_nodes_.size()},
+    };
+    std::cerr << json.dump() << std::endl;
     if (single) {
-        fprintf(stderr,
-                "VS-CIO-SINGLE NUM-INPUTS=%d NUM-OUTPUTS=%d CONNECTED=%d\n",
-                max_num_in,
-                max_num_out,
-                !mvs.disconnected);
         int io_weight = 0;
         switch (itype_) {
             case iter_type::LINEAR:
@@ -270,11 +273,6 @@ int mvs_finder::find_mvsio_(mvs &mvs,
 
         return io_weight;
     } else {
-        fprintf(stderr,
-                "VS-CIO-ENUM NUM-INPUTS=%d NUM-OUTPUTS=%d CONNECTED=%d\n",
-                max_num_in,
-                max_num_out,
-                !mvs.disconnected);
         reset_stats();
         visit(max_dels, false, max_io_weight, max_num_in, max_num_out);
         dump_stats(max_io_weight);
@@ -302,7 +300,6 @@ void mvs_finder::find_mvsio(mvs &mvs,
     int s_node_input_delta = 1;
     if (single || !mvs.disconnected) {
         s_nodes_ = snode_enum(*dfg_, mvs.nodes(), s_clusters_);
-        fprintf(stderr, "NUM-S-NODES=%lu\n", s_nodes_.size());
         for (auto &cluster : s_nodes_) {
             link_cluster(cluster);
             s_weights.push_back(dfg_->weight(cluster.nodes().front().first));
@@ -364,23 +361,23 @@ std::vector<io_config> mvs_finder::mvs_enum(int max_num_in,
 {
     itype_ = itype;
     flags_ = flags;
-    fprintf(stderr,
-            "\nMVS-ENUM NUM-INPUTS=%d NUM-OUTPUTS=%d\n",
-            max_num_in,
-            max_num_out);
-    fprintf(stderr, "OPTS=%x\n", flags_);
+    nlohmann::json json = {
+        {"num_inputs", max_num_in},
+        {"num_outputs", max_num_out},
+        {"flags", flags_},
+    };
+    std::cerr << json.dump() << std::endl;
 
     std::vector<io_config> output;
     io_output_ = &output;
     int max_io_weight = 0;
     for (auto &mvsc : mvs_vec_) {
-        fprintf(stderr, "\nMAX-IO-WEIGHT=%d\n", max_io_weight);
-        fprintf(stderr,
-                "mvs-c NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-                mvsc.num_in(),
-                mvsc.num_out());
-        dump_intset(mvsc.nodes(), stderr);
-        fprintf(stderr, "WEIGHT=%f\n", mvsc.weight());
+        nlohmann::json json = {
+            {"enum", false},
+            {"max_io_weight", max_io_weight},
+            {"mvs", mvsc},
+        };
+        std::cerr << json.dump() << std::endl;
 
         int m = flags_ & (1 << 5) ? max_io_weight : 0;
         if (mvsc.weight() >= m) {
@@ -390,17 +387,20 @@ std::vector<io_config> mvs_finder::mvs_enum(int max_num_in,
                 mvsc.io_weight = mvsc.weight();
             max_io_weight = std::max(max_io_weight, mvsc.io_weight);
         }
-        fprintf(stderr, "IO-WEIGHT=%d\n", mvsc.io_weight);
+        json = {
+            {"io_weight", mvsc.io_weight},
+        };
+        std::cerr << json.dump() << std::endl;
     }
-    fprintf(stderr, "\nMAX-IO-WEIGHT=%d\n", max_io_weight);
 
     for (auto &mvsc : mvs_vec_) {
         if (mvsc.io_weight == max_io_weight) {
-            fprintf(stderr,
-                    "\nMVS-C NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-                    mvsc.num_in(),
-                    mvsc.num_out());
-            dump_intset(mvsc.nodes(), stderr);
+            nlohmann::json json = {
+                {"enum", true},
+                {"max_io_weight", max_io_weight},
+                {"mvs", mvsc},
+            };
+            std::cerr << json.dump() << std::endl;
             if (mvsc.io_weight < mvsc.weight())
                 find_mvsio(mvsc, false, max_io_weight, max_num_in, max_num_out);
             else
@@ -464,36 +464,21 @@ void mvs_finder::update_config(int id, bool add)
 static void dump_v_graph(const Graph &v_graph,
                          const std::vector<v_cluster> &v_clusters)
 {
+    nlohmann::json json = nlohmann::json::array();
     for (unsigned i = 0; i < v_clusters.size(); i++) {
-        fprintf(stderr,
-                "V-CLUSTER %u NUM-ADJS=%d",
-                i,
-                (int)v_graph.node(i).edges().size());
-        fprintf(stderr, "\n  NODES=");
-        for (auto &node : v_clusters[i].nodes)
-            fprintf(stderr, "%d ", node);
-        fprintf(stderr, "\n  ADJ=");
-        for (auto &edge : v_graph.node(i).edges())
-            fprintf(stderr, "%d ", edge);
-        fprintf(stderr, "\n");
-    }
+        json += {
+            {"id", i},
+            {"nodes", v_clusters[i].nodes},
+            {"edges", v_graph.node(i).edges()},
+        };
+    };
+    std::cerr << json.dump() << std::endl;
 }
 
 static void dump_s_clusters(const std::vector<s_cluster> &s_clusters)
 {
-    for (auto &cluster : s_clusters) {
-        fprintf(stderr,
-                "S-CLUSTER SRC=%d DST=%d",
-                cluster.src(),
-                cluster.dst());
-        fprintf(stderr, "\n  NODES=");
-        for (auto &node : cluster.nodes())
-            fprintf(stderr, "%d ", node.first);
-        fprintf(stderr, "\n  EDGES=");
-        for (auto &edge : cluster.edges())
-            fprintf(stderr, "(%d, %d) ", edge.first, edge.second);
-        fprintf(stderr, "\n");
-    }
+    nlohmann::json json = s_clusters;
+    std::cerr << json.dump() << std::endl;
 }
 
 mvs_finder::mvs_finder(DFG *dfg)
@@ -552,27 +537,32 @@ mvs_finder::mvs_finder(DFG *dfg)
 
     v_graph.invert();
 
-    fprintf(stderr, "NUM-CLUSTERS=%d\n", num_clusters);
-
     mis_finder finder(&v_graph);
     if (!USE_BK) {
         for (int i = 0; i < dfg->num_nodes(); i++)
             if (!F.contains(i))
                 config_.add(i);
     }
-    auto stats = finder.visit(USE_BK,
-                              [this](const intset &) { this->add_config(); },
-                              [this](const intset &, int id, bool add) {
-                                  this->update_config(id, add);
-                              });
-    fprintf(stderr, "NUM-MVS-C=%d NUM-CALLS=%d\n", stats.first, stats.second);
+    auto stats = finder.visit(
+        USE_BK,
+        [this](const intset &) { this->add_config(); },
+        [this](const intset &, int id, bool add) {
+            this->update_config(id, add);
+        });
 
     s_clusters_ = scluster_enum(*dfg_);
 
     int n = 0;
     for (auto &cluster : s_clusters_)
         n += cluster.nodes().size();
-    fprintf(stderr, "NUM-S-CLUSTER-NODES=%d\n", n);
+
+    nlohmann::json json = {
+        {"calls", stats.second},
+        {"num_clusters", num_clusters},
+        {"num_mvs-c", stats.first},
+        {"num_s-cluster-nodes", n},
+    };
+    std::cerr << json.dump() << std::endl;
 
     std::sort(mvs_vec_.begin(),
               mvs_vec_.end(),

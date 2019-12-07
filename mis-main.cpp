@@ -15,7 +15,7 @@
 
 #include "common.h"
 #include "graph.h"
-#include <cstdio>
+#include <ostream>
 #include <unistd.h>
 
 static void find_mis(Graph *graph, bool bk)
@@ -23,15 +23,20 @@ static void find_mis(Graph *graph, bool bk)
     auto size = graph->num_nodes();
     double start = get_time();
     mis_finder finder(graph);
-    auto stats = finder.visit(bk,
-                              [size](const intset &name) {},
-                              [](const intset &name, int id, bool add) {});
+    auto stats = finder.visit(
+        bk,
+        [size](const intset &name) {},
+        [](const intset &name, int id, bool add) {});
     double end = get_time();
-    fprintf(stdout,
-            "NUM-MIS=%u CALLS=%u TIME=%.2f\n",
-            stats.first,
-            stats.second,
-            end - start);
+
+    nlohmann::json json = {
+        {"calls", stats.second},
+        {"num_MIS", stats.first},
+        {"num_edges", graph->num_edges() / 2},
+        {"num_nodes", graph->num_nodes()},
+        {"time", end - start},
+    };
+    std::cout << json.dump(4) << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -54,9 +59,5 @@ int main(int argc, char **argv)
     if (invert)
         graph->invert();
 
-    fprintf(stdout,
-            "NODES=%d EDGES=%d\n",
-            graph->num_nodes(),
-            graph->num_edges() / 2);
     find_mis(graph.get(), use_bk);
 }

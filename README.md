@@ -55,12 +55,7 @@ mvs reads the input from **standard input**. The command
 enumerates the maximum convex subgraphs of the input graph with at
 most MAX-IN inputs and MAX-OUT outputs.
 
-The output of mvs is a sequence of lines with format
-
-`MVS-CIO NUM-INPUTS=I NUM-OUTPUTS=O NODES=N_1 N_2 ... N_r`
-
-where `{ N_1, N_2, ..., N_r }` is a set of nodes and `I` and `O` are
-its number of inputs and outputs. mvs also logs to **standard error**
+The output of mvs is in JSON format. mvs also logs to **standard error**
 various debug messages. They can be ignored by redirecting **standard
 error** to **/dev/null**. By default, mvs enumerates the maximum
 subgraphs with respect to the number of nodes. To enumerate the

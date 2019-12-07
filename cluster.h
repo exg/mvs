@@ -1,6 +1,5 @@
 #pragma once
 
-#include "common.h"
 #include "dfg.h"
 
 class s_cluster {

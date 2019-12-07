@@ -63,15 +63,34 @@ bool fp_eq(double x, double y, double eps)
     return diff >= -eps && diff <= eps;
 }
 
-void dump_intset(const intset &s, FILE *f)
+void to_json(nlohmann::json &j, const s_cluster &cluster)
 {
+    j = {
+        {"nodes", cluster.nodes()},
+        {"edges", cluster.edges()},
+        {"src", cluster.src()},
+        {"dst", cluster.dst()},
+    };
+}
+
+void to_json(nlohmann::json &j, const io_config &config)
+{
+    j = {
+        {"nodes", config.nodes()},
+        {"inputs", config.inputs()},
+        {"outputs", config.outputs()},
+    };
+}
+
+void to_json(nlohmann::json &j, const intset &s)
+{
+    j = nlohmann::json::array();
     int i = 0;
     for (;;) {
         i = s.find_next(i);
         if (i == -1)
             break;
-        fprintf(f, "%d ", i);
+        j += i;
         i++;
     }
-    fprintf(f, "\n");
 }

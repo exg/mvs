@@ -17,16 +17,8 @@
 #include "vs.h"
 #include <climits>
 #include <cstdio>
+#include <ostream>
 #include <unistd.h>
-
-static void print_mvsio(const io_config &config)
-{
-    fprintf(stdout,
-            "MVS-CIO NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-            config.num_in(),
-            config.num_out());
-    dump_intset(config.nodes(), stdout);
-}
 
 int main(int argc, char *argv[])
 {
@@ -71,27 +63,20 @@ int main(int argc, char *argv[])
     if (dfg->forbidden().size() == dfg->num_nodes())
         return 1;
 
-    fprintf(stdout,
-            "DFG NAME=%s NUM-NODES=%d\n",
-            dfg->name().c_str(),
-            dfg->num_nodes());
-    fflush(stdout);
-
     double max_weight;
     double start = get_time();
     auto output = vs_enum(*dfg, enum_all, max_num_in, max_num_out, max_weight);
     double end = get_time();
 
-    fprintf(stdout, "\n");
-    for (auto &config : output) {
-        print_mvsio(config);
-        fprintf(stdout, "\n");
-    }
-    fprintf(stdout,
-            "COUNT=%lu MAX-WEIGHT=%.2f TIME=%.2f\n",
-            output.size(),
-            max_weight,
-            end - start);
+    nlohmann::json report = {
+        {"max_weight", max_weight},
+        {"name", dfg->name()},
+        {"num_nodes", dfg->num_nodes()},
+        {"num_subgraphs", output.size()},
+        {"subgraphs", output},
+        {"time", end - start},
+    };
+    std::cout << report.dump(4) << std::endl;
 
     return 0;
 }

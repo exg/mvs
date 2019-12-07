@@ -16,6 +16,7 @@
 #include "common.h"
 #include "vs.h"
 #include <cstdio>
+#include <ostream>
 
 int main(int argc, char *argv[])
 {
@@ -36,14 +37,11 @@ int main(int argc, char *argv[])
         config.add(v);
     }
 
-    fprintf(stdout,
-            "CONFIG NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-            config.num_in(),
-            config.num_out());
-    dump_intset(config.nodes(), stdout);
     intset closure = config.closure();
-    fprintf(stdout, "CONVEX=%d\n", config.nodes() == closure);
-    fprintf(stdout, "VALID=%d\n", !config.nodes().intersects(dfg->forbidden()));
+    nlohmann::json json = config;
+    json["convex"] = config.nodes() == closure;
+    json["valid"] = !config.nodes().intersects(dfg->forbidden());
+    std::cout << json.dump(4) << std::endl;
 
     return 0;
 }

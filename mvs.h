@@ -1,6 +1,7 @@
 #pragma once
 
 #include "cluster.h"
+#include "common.h"
 #include "dfg.h"
 
 class v_cluster {
@@ -95,15 +96,13 @@ private:
 
     void dump_stats(int min_weight)
     {
-        fprintf(stderr,
-                "  MIN-WEIGHT=%d COUNT=%d NUM-CALLS=%d PRUNED[1]=%d "
-                "PRUNED[2]=%d PRUNED[3]=%d\n",
-                min_weight,
-                count_,
-                calls_,
-                pruned_[0],
-                pruned_[1],
-                pruned_[2]);
+        nlohmann::json json = {
+            {"count", count_},
+            {"min_weight", min_weight},
+            {"calls", calls_},
+            {"pruned", pruned_},
+        };
+        std::cerr << json.dump() << std::endl;
     }
 };
 

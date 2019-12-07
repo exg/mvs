@@ -17,16 +17,8 @@
 #include "mvs.h"
 #include <climits>
 #include <cstdio>
+#include <ostream>
 #include <unistd.h>
-
-static void print_mvsio(const io_config &mvs)
-{
-    fprintf(stdout,
-            "MVS-CIO NUM-INPUTS=%d NUM-OUTPUTS=%d NODES=",
-            mvs.num_in(),
-            mvs.num_out());
-    dump_intset(mvs.nodes(), stdout);
-}
 
 static bool parse_flags(const std::string &str, uint8_t &flags)
 {
@@ -112,27 +104,20 @@ int main(int argc, char *argv[])
     if (dfg->forbidden().size() == dfg->num_nodes())
         return 1;
 
-    fprintf(stdout,
-            "DFG NAME=%s NUM-NODES=%d\n",
-            dfg->name().c_str(),
-            dfg->num_nodes());
-    fflush(stdout);
-
     double start = get_time();
     mvs_finder finder(dfg.get());
     auto output = finder.mvs_enum(max_num_in, max_num_out, itype, flags);
     double end = get_time();
 
-    fprintf(stdout, "\n");
-    for (auto &mvs : output) {
-        print_mvsio(mvs);
-        fprintf(stdout, "\n");
-    }
-    fprintf(stdout,
-            "COUNT=%lu MAX-WEIGHT=%.2f TIME=%.2f\n",
-            output.size(),
-            !output.empty() ? output[0].weight() : 0,
-            end - start);
+    nlohmann::json report = {
+        {"max_weight", !output.empty() ? output[0].weight() : 0},
+        {"name", dfg->name()},
+        {"num_nodes", dfg->num_nodes()},
+        {"num_subgraphs", output.size()},
+        {"subgraphs", output},
+        {"time", end - start},
+    };
+    std::cout << report.dump(4) << std::endl;
 
     return 0;
 }
