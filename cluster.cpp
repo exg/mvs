@@ -84,10 +84,12 @@ std::vector<s_cluster> snode_enum(const DFG &dfg,
             int pred = dfg.in_edges(i)[0];
             int succ = dfg.out_edges(i)[0];
 
-            std::vector<std::pair<int, double>> nodes { { i, dfg.weight(i) } };
+            std::vector<std::pair<int, double>> nodes {
+                {i, dfg.weight(i)},
+            };
             std::vector<std::pair<int, int>> edges {
-                { pred, i },
-                { i, succ },
+                {pred, i},
+                {i, succ},
             };
             output.emplace_back(std::move(nodes), std::move(edges), pred, succ);
         }

@@ -89,7 +89,7 @@ public:
 
     bool operator==(const intset &s) const
     {
-        auto n = std::min({ num_blocks(), s.num_blocks() });
+        auto n = std::min({num_blocks(), s.num_blocks()});
         for (unsigned i = 0; i < n; i++)
             if (data_[i] != s.data_[i])
                 return false;
@@ -153,7 +153,7 @@ public:
 
     bool is_subset_of(const intset &s) const
     {
-        auto n = std::min({ num_blocks(), s.num_blocks() });
+        auto n = std::min({num_blocks(), s.num_blocks()});
         for (unsigned i = 0; i < n; i++)
             if (data_[i] & ~s.data_[i])
                 return false;
@@ -165,7 +165,7 @@ public:
 
     bool intersects(const intset &s) const
     {
-        auto n = std::min({ num_blocks(), s.num_blocks() });
+        auto n = std::min({num_blocks(), s.num_blocks()});
         for (unsigned i = 0; i < n; i++)
             if (data_[i] & s.data_[i])
                 return true;

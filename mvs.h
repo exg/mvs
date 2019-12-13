@@ -31,7 +31,11 @@ public:
     int io_weight = 0;
 };
 
-enum class iter_type { LINEAR, LINEAR_REV, BINARY_SEARCH };
+enum class iter_type {
+    LINEAR,
+    LINEAR_REV,
+    BINARY_SEARCH,
+};
 
 class mvs_finder {
 public:
