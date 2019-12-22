@@ -85,12 +85,7 @@ void to_json(nlohmann::json &j, const io_config &config)
 void to_json(nlohmann::json &j, const intset &s)
 {
     j = nlohmann::json::array();
-    int i = 0;
-    for (;;) {
-        i = s.find_next(i);
-        if (i == -1)
-            break;
+    for (const auto &i : s) {
         j += i;
-        i++;
     }
 }

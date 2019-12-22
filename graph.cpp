@@ -126,17 +126,11 @@ void mis_finder::visit()
         is_f_node = true;
     } else {
         int max_edges = 0;
-        int u = 0;
-        for (;;) {
-            u = nodes_left_.find_next(u);
-            if (u == -1)
-                break;
-
+        for (const auto &u : nodes_left_) {
             if (num_edges_[u] > max_edges) {
                 max_edges = num_edges_[u];
                 id = u;
             }
-            u++;
         }
     }
     if (id == -1)
@@ -185,12 +179,7 @@ static void find_pivot(const Graph &graph,
                        int &best_id,
                        int &best_score)
 {
-    int id = 0;
-    for (;;) {
-        id = S.find_next(id);
-        if (id == -1)
-            break;
-
+    for (const auto &id : S) {
         int score = 0;
         for (int v : graph.edges(id)) {
             if (P.contains(v))
@@ -200,7 +189,6 @@ static void find_pivot(const Graph &graph,
             best_id = id;
             best_score = score;
         }
-        id++;
     }
 }
 

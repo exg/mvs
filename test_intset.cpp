@@ -30,13 +30,8 @@ int main()
         bool has = s.contains(i);
         assert(has == elements[i]);
     }
-    int elem = 0;
-    for (;;) {
-        elem = s.find_next(elem);
-        if (elem < 0)
-            break;
+    for (const auto &elem : s) {
         assert(elements[elem]);
-        elem++;
     }
     for (i = 0; i < 256; i++)
         s.remove(i);

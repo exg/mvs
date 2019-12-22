@@ -190,7 +190,7 @@ public:
         return size;
     }
 
-    int find_next(unsigned elem) const
+    unsigned find_next(unsigned elem) const
     {
         if (elem >= num_bits_)
             return -1;
@@ -276,4 +276,38 @@ public:
                 return true;
         return false;
     }
+
+    class iterator {
+        const intset &s_;
+        unsigned elem_;
+
+    public:
+        iterator(const intset &s, unsigned elem)
+            : s_(s)
+        {
+            elem_ = s_.find_next(elem);
+        }
+        iterator &operator++()
+        {
+            elem_ = s_.find_next(elem_ + 1);
+            return *this;
+        }
+        iterator operator++(int)
+        {
+            iterator it = *this;
+            ++(*this);
+            return it;
+        }
+        bool operator==(iterator other) const { return elem_ == other.elem_; }
+        bool operator!=(iterator other) const { return !(*this == other); }
+        int operator*() { return elem_; }
+
+        using difference_type = long long;
+        using value_type = unsigned;
+        using pointer = const unsigned *;
+        using reference = const unsigned &;
+        using iterator_category = std::input_iterator_tag;
+    };
+    iterator begin() const { return {*this, 0}; }
+    iterator end() const { return {*this, num_bits_}; }
 };

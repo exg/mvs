@@ -162,14 +162,8 @@ void dfs_visitor::i_visit(const DFG &dfg,
 intset config::pred() const
 {
     intset out(dfg_->num_nodes());
-    int u = 0;
-    for (;;) {
-        u = nodes_.find_next(u);
-        if (u == -1)
-            break;
-
+    for (const auto &u : nodes_) {
         out.add_difference(dfg_->pred(u), nodes_);
-        u++;
     }
 
     return out;
@@ -178,14 +172,8 @@ intset config::pred() const
 intset config::succ() const
 {
     intset out(dfg_->num_nodes());
-    int u = 0;
-    for (;;) {
-        u = nodes_.find_next(u);
-        if (u == -1)
-            break;
-
+    for (const auto &u : nodes_) {
         out.add_difference(dfg_->succ(u), nodes_);
-        u++;
     }
 
     return out;
@@ -202,14 +190,8 @@ intset config::closure() const
 void io_config::init_weight()
 {
     weight_ = 0;
-    int u = 0;
-    for (;;) {
-        u = nodes_.find_next(u);
-        if (u == -1)
-            break;
-
+    for (const auto &u : nodes_) {
         weight_ += dfg_->weight(u);
-        u++;
     }
 }
 

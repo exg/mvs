@@ -73,12 +73,7 @@ int mvs_finder::find_best_recursion_node(int max_num_in,
 {
     int id = -1;
     std::pair<int, int> best_delta(0, 0);
-    int u = 0;
-    for (;;) {
-        u = nodes_left_.find_next(u);
-        if (u == -1)
-            break;
-
+    for (const auto &u : nodes_left_) {
         bool source = is_source(*dfg_, nodes(), u);
         bool sink = is_sink(*dfg_, nodes(), u);
 
@@ -105,7 +100,6 @@ int mvs_finder::find_best_recursion_node(int max_num_in,
                 best_delta = delta;
             }
         }
-        u++;
     }
     return id;
 }
@@ -524,14 +518,9 @@ mvs_finder::mvs_finder(DFG *dfg)
     Graph v_graph(num_clusters);
 
     for (int i = 0; i < num_clusters; i++) {
-        int v = 0;
-        for (;;) {
-            v = v_clusters_[i].P().find_next(v);
-            if (v == -1)
-                break;
+        for (const auto &v : v_clusters_[i].P()) {
             if (class_of[v] != i)
                 v_graph.add_edge(i, class_of[v]);
-            v++;
         }
     }
 

@@ -37,12 +37,7 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
             std::vector<std::pair<int, int>> edges;
             int vi = -1;
             int vo = -1;
-            int u = 0;
-            for (;;) {
-                u = vs[i].nodes().find_next(u);
-                if (u == -1)
-                    break;
-
+            for (const auto &u : vs[i].nodes()) {
                 for (auto &v : dfg.out_edges(u)) {
                     if (vs[i].nodes().contains(v))
                         edges.emplace_back(u, v);
@@ -59,7 +54,6 @@ std::vector<s_cluster> scluster_enum(const DFG &dfg)
                         vi = v;
                     }
                 }
-                u++;
             }
 
             output.emplace_back(std::move(nodes), std::move(edges), vi, vo);

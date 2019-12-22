@@ -79,15 +79,9 @@ void vs_finder::visit(bool enum_all,
 
     int id = -1;
     auto pred = config_.pred();
-    int u = 0;
-    for (;;) {
-        u = pred.find_next(u);
-        if (u == -1)
-            break;
-
+    for (const auto &u : pred) {
         if (!F_.contains(u))
             id = u;
-        u++;
     }
 
     if (id == -1) {
@@ -136,16 +130,10 @@ static void vs_enum_(const DFG &dfg,
         auto exclusion = config_exclusion(dfg, outputs.nodes());
         auto pred = outputs.pred();
         intset valid(dfg.num_nodes());
-        int u = 0;
-        for (;;) {
-            u = exclusion.find_next(u);
-            if (u == -1)
-                break;
-
+        for (const auto &u : exclusion) {
             if (!dfg.is_forbidden(u) &&
                 !(pred.contains(u) && dfg.succ(u).intersects(pred, exclusion)))
                 valid.add(u);
-            u++;
         }
 
         int min = outputs.nodes().minimum();
