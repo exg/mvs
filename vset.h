@@ -22,6 +22,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
 #include <algorithm>
 #include <vector>
 
@@ -64,7 +66,7 @@ struct vmap : std::vector<std::pair<T, U>> {
     {
         auto it = find(v);
         if (it == this->end())
-            it = this->insert(it, { v, data });
+            it = this->insert(it, {v, data});
         return (*it).second;
     }
 

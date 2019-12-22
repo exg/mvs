@@ -22,16 +22,16 @@ static void find_mis(Graph *graph, bool bk)
 {
     auto size = graph->num_nodes();
     double start = get_time();
-    mis_finder finder(graph);
-    auto stats = finder.visit(
+    mis_finder finder(
+        graph,
         bk,
         [size](const intset &name) {},
         [](const intset &name, int id, bool add) {});
     double end = get_time();
 
     nlohmann::json json = {
-        {"calls", stats.second},
-        {"num_MIS", stats.first},
+        {"calls", finder.get_calls()},
+        {"num_MIS", finder.get_count()},
         {"num_edges", graph->num_edges() / 2},
         {"num_nodes", graph->num_nodes()},
         {"time", end - start},

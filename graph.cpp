@@ -19,6 +19,20 @@
 #include <climits>
 #include <string>
 
+Graph::Graph(std::initializer_list<std::pair<int, int>> list)
+{
+    int num_nodes = 0;
+    for (auto &edge : list)
+        num_nodes = std::max({
+            num_nodes,
+            edge.first + 1,
+            edge.second + 1,
+        });
+    nodes_.resize(num_nodes);
+    for (auto &edge : list)
+        add_edge(edge.first, edge.second);
+}
+
 std::unique_ptr<Graph> Graph::make_graph(std::istream &in)
 {
     std::string line;
@@ -49,36 +63,56 @@ std::unique_ptr<Graph> Graph::make_graph(std::istream &in)
     return graph;
 }
 
-std::pair<unsigned, unsigned> mis_finder::visit(
-    bool use_bk,
-    const std::function<void(const intset &)> &output_cb,
-    const std::function<void(const intset &, int, bool)> &update_cb)
+void Graph::invert()
+{
+    for (int i = 0; i < nodes_.size(); i++) {
+        unsigned pos = 0;
+        auto size = nodes_[i].adj_list.size();
+        std::sort(nodes_[i].adj_list.begin(), nodes_[i].adj_list.end());
+        for (int u = 0; u < nodes_.size(); u++) {
+            if (pos < size && nodes_[i].adj_list[pos] == u)
+                pos++;
+            else if (u != i)
+                nodes_[i].adj_list.push_back(u);
+        }
+        nodes_[i].adj_list.erase(nodes_[i].adj_list.begin(),
+                                 nodes_[i].adj_list.begin() + size);
+    }
+}
+
+mis_finder::mis_finder(const Graph *graph,
+                       bool use_bk,
+                       std::function<void(const intset &)> output_cb,
+                       std::function<void(const intset &, int, bool)> update_cb)
+    : graph_(graph)
+    , config_(graph->num_nodes())
+    , nodes_left_(graph->num_nodes())
+    , f_nodes_(graph->num_nodes())
+    , output_cb_(std::move(output_cb))
+    , update_cb_(std::move(update_cb))
 {
     auto size = graph_->num_nodes();
-    config_.clear();
-    nodes_left_.clear();
-    f_nodes_.clear();
-    count_ = 0;
-    calls_ = 0;
-    output_cb_ = output_cb;
-    update_cb_ = update_cb;
     for (int i = 0; i < size; i++)
         nodes_left_.add(i);
     if (use_bk)
-        bk_visit_();
+        bk_visit();
     else {
-        for (int i = 0; i < size; i++)
+        num_edges_.resize(size);
+        g_num_edges_ = 0;
+        for (int i = 0; i < size; i++) {
             config_.add(i);
-        visit_();
+            num_edges_[i] = graph_->edges(i).size();
+            g_num_edges_ += num_edges_[i];
+        }
+        visit();
     }
-    return { count_, calls_ };
 }
 
-void mis_finder::visit_()
+void mis_finder::visit()
 {
     calls_++;
 
-    if (graph_->num_edges() == 0) {
+    if (g_num_edges_ == 0) {
         output_cb_(config_);
         count_++;
         return;
@@ -98,9 +132,8 @@ void mis_finder::visit_()
             if (u == -1)
                 break;
 
-            const Node &node = graph_->node(u);
-            if (node.num_edges() > max_edges) {
-                max_edges = node.num_edges();
+            if (num_edges_[u] > max_edges) {
+                max_edges = num_edges_[u];
                 id = u;
             }
             u++;
@@ -110,30 +143,29 @@ void mis_finder::visit_()
         return;
 
     nodes_left_.remove(id);
-    const Node &node = graph_->node(id);
 
     config_.remove(id);
     update_cb_(config_, id, false);
 
     prune = false;
-    graph_->num_edges() -= 2 * node.num_edges();
-    for (int v : node.edges()) {
-        graph_->num_edges(v)--;
+    g_num_edges_ -= 2 * num_edges_[id];
+    for (int v : graph_->edges(id)) {
+        num_edges_[v]--;
 
-        if (graph_->node(v).num_edges() == 0 && !config_.contains(v))
+        if (num_edges_[v] == 0 && !config_.contains(v))
             prune = true;
     }
     if (!prune)
-        visit_();
+        visit();
     else
         f_nodes_.clear();
 
     config_.add(id);
     update_cb_(config_, id, true);
 
-    graph_->num_edges() += 2 * node.num_edges();
-    for (int v : node.edges()) {
-        graph_->num_edges(v)++;
+    g_num_edges_ += 2 * num_edges_[id];
+    for (int v : graph_->edges(id)) {
+        num_edges_[v]++;
 
         if (!is_f_node)
             if (config_.contains(v)) {
@@ -142,7 +174,7 @@ void mis_finder::visit_()
             }
     }
     if (!is_f_node)
-        visit_();
+        visit();
 
     nodes_left_.add(id);
 }
@@ -159,9 +191,8 @@ static void find_pivot(const Graph &graph,
         if (id == -1)
             break;
 
-        const Node &node = graph.node(id);
         int score = 0;
-        for (int v : node.edges()) {
+        for (int v : graph.edges(id)) {
             if (P.contains(v))
                 score++;
         }
@@ -173,7 +204,7 @@ static void find_pivot(const Graph &graph,
     }
 }
 
-void mis_finder::bk_visit_()
+void mis_finder::bk_visit()
 {
     calls_++;
 
@@ -191,20 +222,18 @@ void mis_finder::bk_visit_()
     find_pivot(*graph_, nodes_left_, nodes_left_, best_id, best_score);
     find_pivot(*graph_, f_nodes_, nodes_left_, best_id, best_score);
 
-    const Node &b_node = graph_->node(best_id);
-    for (int j = 0; j <= b_node.edges().size(); j++) {
-        int id = j < b_node.edges().size() ? b_node.edges()[j] : best_id;
+    auto &edges = graph_->edges(best_id);
+    for (int j = 0; j <= edges.size(); j++) {
+        int id = j < edges.size() ? edges[j] : best_id;
 
         if (!P.contains(id))
             continue;
-
-        const Node &node = graph_->node(id);
 
         nodes_left_ = P;
         f_nodes_ = X;
 
         nodes_left_.remove(id);
-        for (int v : node.edges()) {
+        for (int v : graph_->edges(id)) {
             nodes_left_.remove(v);
             f_nodes_.remove(v);
         }
@@ -212,7 +241,7 @@ void mis_finder::bk_visit_()
         config_.add(id);
         update_cb_(config_, id, true);
 
-        bk_visit_();
+        bk_visit();
 
         config_.remove(id);
         update_cb_(config_, id, false);

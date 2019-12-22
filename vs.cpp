@@ -142,7 +142,7 @@ static void vs_enum_(const DFG &dfg,
             if (u == -1)
                 break;
 
-            if (!dfg.forbidden().contains(u) &&
+            if (!dfg.is_forbidden(u) &&
                 !(pred.contains(u) && dfg.succ(u).intersects(pred, exclusion)))
                 valid.add(u);
             u++;

@@ -469,7 +469,7 @@ static void dump_v_graph(const Graph &v_graph,
         json += {
             {"id", i},
             {"nodes", v_clusters[i].nodes},
-            {"edges", v_graph.node(i).edges()},
+            {"edges", v_graph.edges(i)},
         };
     };
     std::cerr << json.dump() << std::endl;
@@ -490,7 +490,7 @@ mvs_finder::mvs_finder(DFG *dfg)
     // compute P sets and equivalence classes
     auto class_of = std::make_unique<int[]>(dfg->num_nodes());
     intset P(dfg->num_nodes());
-    auto &F = dfg->forbidden();
+    intset F = dfg->forbidden();
     for (int u = 0; u < dfg->num_nodes(); u++) {
         if (F.contains(u))
             continue;
@@ -537,13 +537,13 @@ mvs_finder::mvs_finder(DFG *dfg)
 
     v_graph.invert();
 
-    mis_finder finder(&v_graph);
     if (!USE_BK) {
         for (int i = 0; i < dfg->num_nodes(); i++)
             if (!F.contains(i))
                 config_.add(i);
     }
-    auto stats = finder.visit(
+    mis_finder finder(
+        &v_graph,
         USE_BK,
         [this](const intset &) { this->add_config(); },
         [this](const intset &, int id, bool add) {
@@ -557,9 +557,9 @@ mvs_finder::mvs_finder(DFG *dfg)
         n += cluster.nodes().size();
 
     nlohmann::json json = {
-        {"calls", stats.second},
+        {"calls", finder.get_calls()},
         {"num_clusters", num_clusters},
-        {"num_mvs-c", stats.first},
+        {"num_mvs-c", finder.get_count()},
         {"num_s-cluster-nodes", n},
     };
     std::cerr << json.dump() << std::endl;

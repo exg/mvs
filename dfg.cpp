@@ -17,24 +17,24 @@
 #include "common.h"
 #include <cassert>
 #include <climits>
+#include <list>
 #include <memory>
 #include <stdexcept>
 #include <utility>
 
-DFG::DFG(std::string name, int num_nodes, int frequency)
-    : name_(std::move(name))
-    , num_nodes_(num_nodes)
-    , frequency_(frequency)
-    , F_(num_nodes)
+DFG::DFG(std::initializer_list<std::pair<int, int>> list)
 {
-    in_list_.resize(num_nodes);
-    out_list_.resize(num_nodes);
-    weights_.resize(num_nodes, 1);
-
-    for (int i = 0; i < num_nodes; i++) {
-        pred_.emplace_back(num_nodes);
-        succ_.emplace_back(num_nodes);
-    }
+    int num_nodes = 0;
+    for (auto &edge : list)
+        num_nodes = std::max({
+            num_nodes,
+            edge.first + 1,
+            edge.second + 1,
+        });
+    for (int i = 0; i < num_nodes; i++)
+        nodes_.emplace_back(num_nodes);
+    for (auto &edge : list)
+        add_edge(edge.first, edge.second);
 }
 
 std::unique_ptr<DFG> DFG::make_dfg(std::istream &in, bool set_weights)
@@ -87,43 +87,24 @@ std::unique_ptr<DFG> DFG::make_dfg(std::istream &in, bool set_weights)
     return dfg;
 }
 
-void DFG::dfs_visit(int u, bool *visited, std::list<int> &topo_order)
-{
-    for (auto &v : out_list_[u]) {
-        if (!visited[v]) {
-            visited[v] = true;
-            dfs_visit(v, visited, topo_order);
-        }
-    }
-
-    topo_order.push_front(u);
-}
-
 void DFG::index()
 {
-    for (int i = 0; i < num_nodes_; i++) {
-        if (in_list_[i].empty())
-            F_.add(i);
-
-        if (out_list_[i].empty())
-            F_.add(i);
-    }
-
     // compute a topological ordering, just in case
-    auto visited = std::make_unique<bool[]>(num_nodes_);
     std::list<int> topo_order;
-    for (int i = 0; i < num_nodes_; i++)
-        if (!visited[i])
-            dfs_visit(i, visited.get(), topo_order);
+    dfs_visitor visitor(*this, [this, &topo_order](int u) {
+        nodes_[u].pred.clear();
+        nodes_[u].succ.clear();
+        topo_order.push_front(u);
+    });
 
     // compute pred and succ sets for each node
     for (auto &u : topo_order) {
         // if (F_.contains(u))
         //   continue;
 
-        for (auto &v : out_list_[u]) {
-            pred_[v].add(pred_[u]);
-            pred_[v].add(u);
+        for (auto &v : out_edges(u)) {
+            nodes_[v].pred.add(nodes_[u].pred);
+            nodes_[v].pred.add(u);
         }
     }
 
@@ -132,10 +113,49 @@ void DFG::index()
         // if (F_.contains(u))
         //   continue;
 
-        for (auto &v : out_list_[u]) {
-            succ_[u].add(succ_[v]);
-            succ_[u].add(v);
+        for (auto &v : out_edges(u)) {
+            nodes_[u].succ.add(nodes_[v].succ);
+            nodes_[u].succ.add(v);
         }
+    }
+}
+
+intset DFG::forbidden() const
+{
+    intset s(num_nodes());
+    for (int i = 0; i < num_nodes(); i++) {
+        if (is_forbidden(i) || in_edges(i).empty() || out_edges(i).empty())
+            s.add(i);
+    }
+    return s;
+}
+
+void dfs_visitor::i_visit(const DFG &dfg,
+                          int u,
+                          const std::function<void(int)> &visit_cb)
+{
+    struct Frame {
+        int node;
+        vset<int>::const_iterator it;
+    };
+    std::stack<Frame> stack;
+    stack.push({u, dfg.out_edges(u).begin()});
+    visited_[u] = true;
+    while (!stack.empty()) {
+        auto frame = stack.top();
+        stack.pop();
+        int u = frame.node;
+        auto it = frame.it;
+        while (it != dfg.out_edges(u).end()) {
+            int v = *it++;
+            if (!visited_[v]) {
+                visited_[v] = true;
+                stack.push({u, it});
+                u = v;
+                it = dfg.out_edges(u).begin();
+            }
+        }
+        visit_cb(u);
     }
 }
 

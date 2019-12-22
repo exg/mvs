@@ -1,106 +1,72 @@
 #pragma once
 
 #include "intset.h"
+#include "vset.h"
 #include <algorithm>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <vector>
 
-class Node {
-public:
-    void add_edge(int v)
-    {
-        adj_list_.push_back(v);
-        num_edges_++;
-    }
-
-    void invert(int id, unsigned n)
-    {
-        unsigned pos = 0;
-        unsigned size = adj_list_.size();
-        std::sort(adj_list_.begin(), adj_list_.end());
-        for (int u = 0; u < n; u++) {
-            if (pos < size && adj_list_[pos] == u)
-                pos++;
-            else if (u != id)
-                adj_list_.push_back(u);
-        }
-
-        adj_list_.erase(adj_list_.begin(), adj_list_.begin() + size);
-        num_edges_ = adj_list_.size();
-    }
-
-    const std::vector<int> &edges() const { return adj_list_; }
-    int num_edges() const { return num_edges_; }
-    int &num_edges() { return num_edges_; }
-
-private:
-    std::vector<int> adj_list_;
-    int num_edges_ = 0;
-};
-
 class Graph {
+    struct Node {
+        vset<int> adj_list;
+    };
+
 public:
     Graph(int num_nodes) { nodes_.resize(num_nodes); }
+    Graph(std::initializer_list<std::pair<int, int>> list);
     static std::unique_ptr<Graph> make_graph(std::istream &in);
 
     void add_edge(int u, int v)
     {
-        auto u_edges = nodes_[u].edges();
-        if (std::find(u_edges.begin(), u_edges.end(), v) == u_edges.end()) {
-            nodes_[u].add_edge(v);
-            nodes_[v].add_edge(u);
-            num_edges_ += 2;
-        }
+        nodes_[u].adj_list.add(v);
+        nodes_[v].adj_list.add(u);
     }
-
-    void invert()
+    void remove_edge(int u, int v)
     {
-        num_edges_ = 0;
-        for (int i = 0; i < nodes_.size(); i++) {
-            nodes_[i].invert(i, nodes_.size());
-            num_edges_ += nodes_[i].edges().size();
-        }
+        nodes_[u].adj_list.remove(v);
+        nodes_[v].adj_list.remove(u);
     }
+    void invert();
 
-    const Node &node(int u) const { return nodes_[u]; }
     int num_nodes() const { return nodes_.size(); }
-    int num_edges() const { return num_edges_; }
-    int &num_edges() { return num_edges_; }
-    int &num_edges(int u) { return nodes_[u].num_edges(); }
+    int num_edges() const
+    {
+        int num_edges = 0;
+        for (int i = 0; i < num_nodes(); i++)
+            num_edges += edges(i).size();
+        return num_edges;
+    }
+    const vset<int> &edges(int u) const { return nodes_[u].adj_list; }
 
 private:
     std::vector<Node> nodes_;
-    int num_edges_ = 0;
 };
 
 class mis_finder {
 public:
-    mis_finder(Graph *graph)
-        : graph_(graph)
-        , config_(graph->num_nodes())
-        , nodes_left_(graph->num_nodes())
-        , f_nodes_(graph->num_nodes())
-    {
-    }
+    mis_finder(const Graph *graph,
+               bool use_bk,
+               std::function<void(const intset &)> output_cb,
+               std::function<void(const intset &, int, bool)> update_cb);
 
-    std::pair<unsigned, unsigned> visit(
-        bool use_bk,
-        const std::function<void(const intset &)> &output_cb,
-        const std::function<void(const intset &, int, bool)> &update_cb);
+    unsigned get_count() const { return count_; }
+    unsigned get_calls() const { return calls_; }
 
 private:
-    void visit_();
-    void bk_visit_();
+    void visit();
+    void bk_visit();
 
-    std::function<void(const intset &)> output_cb_;
-    std::function<void(const intset &, int, bool)> update_cb_;
-
-    Graph *graph_;
+    const Graph *graph_;
     intset config_;
     intset nodes_left_;
     intset f_nodes_;
-    unsigned count_;
-    unsigned calls_;
+    unsigned count_ = 0;
+    unsigned calls_ = 0;
+    std::vector<int> num_edges_;
+    int g_num_edges_;
+
+    std::function<void(const intset &)> output_cb_;
+    std::function<void(const intset &, int, bool)> update_cb_;
 };

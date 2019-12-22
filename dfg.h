@@ -3,55 +3,95 @@
 #include "intset.h"
 #include "vset.h"
 #include <iostream>
-#include <list>
 #include <memory>
+#include <stack>
 #include <string>
 
 class DFG {
+    struct Node {
+        Node(int num_nodes)
+            : pred(num_nodes)
+            , succ(num_nodes)
+        {
+        }
+
+        vset<int> in_list;
+        vset<int> out_list;
+        double weight = 1;
+        bool forbidden = false;
+        intset pred;
+        intset succ;
+    };
+
 public:
-    DFG(std::string name, int num_nodes, int frequency);
+    DFG(std::string name, int num_nodes, int frequency)
+        : name_(std::move(name))
+        , frequency_(frequency)
+    {
+        for (int i = 0; i < num_nodes; i++)
+            nodes_.emplace_back(num_nodes);
+    }
+    DFG(std::initializer_list<std::pair<int, int>> list);
     static std::unique_ptr<DFG> make_dfg(std::istream &in, bool set_weights);
-    void index();
 
     void add_edge(int u, int v)
     {
-        out_list_[u].add(v);
-        in_list_[v].add(u);
+        nodes_[u].out_list.add(v);
+        nodes_[v].in_list.add(u);
     }
-
     void remove_edge(int u, int v)
     {
-        out_list_[u].remove(v);
-        in_list_[v].remove(u);
+        nodes_[u].out_list.remove(v);
+        nodes_[v].in_list.remove(u);
     }
-
-    void set_forbidden(int u) { F_.add(u); }
+    void set_forbidden(int u) { nodes_[u].forbidden = true; }
+    void index();
 
     const std::string &name() const { return name_; }
-    int num_nodes() const { return num_nodes_; }
-    double weight(int u) const { return weights_[u]; }
-    double &weight(int u) { return weights_[u]; }
-    const vset<int> &in_edges(int u) const { return in_list_[u]; }
-    const vset<int> &out_edges(int u) const { return out_list_[u]; }
-    const intset &pred(int u) const { return pred_[u]; }
-    const intset &succ(int u) const { return succ_[u]; }
-    const intset &forbidden() const { return F_; }
+    int num_nodes() const { return nodes_.size(); }
+    double weight(int u) const { return nodes_[u].weight; }
+    double &weight(int u) { return nodes_[u].weight; }
+    const vset<int> &in_edges(int u) const { return nodes_[u].in_list; }
+    const vset<int> &out_edges(int u) const { return nodes_[u].out_list; }
+    const intset &pred(int u) const { return nodes_[u].pred; }
+    const intset &succ(int u) const { return nodes_[u].succ; }
+    bool is_forbidden(int u) const { return nodes_[u].forbidden; }
+    intset forbidden() const;
 
 private:
-    void dfs_visit(int u, bool *visited, std::list<int> &topo_order);
-
     std::string name_;
-    int num_nodes_;
-    int frequency_;
+    int frequency_ = 0;
 
-    std::vector<vset<int>> in_list_;
-    std::vector<vset<int>> out_list_;
+    std::vector<Node> nodes_;
+};
 
-    std::vector<double> weights_;
+class dfs_visitor {
+public:
+    dfs_visitor(const DFG &dfg, const std::function<void(int)> &visit_cb)
+        : visited_(std::make_unique<bool[]>(dfg.num_nodes()))
+    {
+        for (int i = 0; i < dfg.num_nodes(); i++)
+            if (!visited_[i])
+                i_visit(dfg, i, visit_cb);
+    }
 
-    std::vector<intset> pred_;
-    std::vector<intset> succ_;
-    intset F_;
+private:
+    void r_visit(const DFG &dfg,
+                 int u,
+                 const std::function<void(int)> &visit_cb)
+    {
+        visited_[u] = true;
+        for (auto &v : dfg.out_edges(u))
+            if (!visited_[v])
+                r_visit(dfg, v, visit_cb);
+        visit_cb(u);
+    }
+
+    void i_visit(const DFG &dfg,
+                 int u,
+                 const std::function<void(int)> &visit_cb);
+
+    std::unique_ptr<bool[]> visited_;
 };
 
 class config {
@@ -100,6 +140,7 @@ public:
     int num_in() const { return inputs_.size(); }
     int num_out() const { return outputs_.size(); }
     double weight() const { return weight_; }
+
     void set(const intset &nodes)
     {
         nodes_ = nodes;
