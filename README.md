@@ -23,7 +23,7 @@ mvs uses a superset of the DIMACS format as graph input format. An
 input file is a sequence of lines. The first line must be in the
 format
 
-p convex NODES EDGES NAME FREQUENCY
+`p convex NODES EDGES NAME FREQUENCY`
 
 where NODES and EDGES are the number of nodes and edges, respectively,
 NAME is the graph name, and FREQUENCY is an integer equal to the graph
@@ -31,12 +31,12 @@ frequency, in the case of a data flow graph, and to 0 otherwise. The
 following lines can specify either edges or node attributes. A line
 with format
 
-e U V
+`e U V`
 
 specifies an edge from node U to node V, where U and V are integers in
 the range [1, NODES]. A line with format
 
-n U WEIGHT FORBIDDEN
+`n U WEIGHT FORBIDDEN`
 
 specifies the attributes of node U, where WEIGHT is a real number
 defining the weight of U, and FORBIDDEN is 1 if U is a forbidden
