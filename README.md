@@ -67,25 +67,23 @@ The mvs repository also contains the following files and directories:
 
 * **data**
 
-the benchmark graphs used in [1], in both DIMACS format and in DOT
-format [2]. In the DOT format, node objects have the additional
-attributes **weight** and **forbidden**, while graph objects have the
-additional attribute **frequency**.
+the benchmark graphs used in [1], in DIMACS format, DOT format [2] and
+DOT JSON format [3]. In the DOT formats, node objects have the
+additional attributes **weight** and **forbidden**, while graph
+objects have the additional attribute **frequency**.
 
-* **scripts/gv2dimacs**
+* **scripts/convert**
 
-script to convert a DOT file to DIMACS format. Usage:
+script to convert a graph in DOT JSON format to DIMACS or DOT format. Usage:
 
-`gv2dimacs FILE.gv > FILE.txt`
+`convert --fmt dimacs FILE.json > FILE.dimacs`
 
-* **scripts/gv_color**
-
-script to color a subgraph of a graph in DOT format. Usage:
-
-`gv_color IFILE.gv 'N_1 N_2 ... N_r' > OFILE.gv`
+`convert --fmt dot FILE.json > FILE.dot`
 
 # References
 
 [1] [Emanuele Giaquinta, Anadi Mishra, Laura Pozzi: Maximum Convex Subgraphs Under I/O Constraint for Automatic Identification of Custom Instructions](https://doi.org/10.1109/TCAD.2014.2387375)
 
 [2] [The DOT Language](https://www.graphviz.org/doc/info/lang.html)
+
+[3] [The DOT JSON format](https://www.graphviz.org/doc/info/output.html#d:dot_json)

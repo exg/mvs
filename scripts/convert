@@ -1,0 +1,99 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+import sys
+
+
+def to_dimacs(graph):
+    edges = {}
+    for obj in graph["edges"]:
+        if obj["tail"] not in edges:
+            edges[obj["tail"]] = []
+        edges[obj["tail"]].append(obj["head"])
+
+    print(
+        "p convex {} {} {} {}".format(
+            len(graph["objects"]),
+            len(graph["edges"]),
+            graph["name"],
+            graph["frequency"],
+        )
+    )
+    for obj in graph["objects"]:
+        vid = obj["_gvid"]
+        print("n {} {} {}".format(vid + 1, obj["weight"], obj["forbidden"]))
+        for edge in sorted(edges.get(vid, []), reverse=True):
+            print("e {} {}".format(vid + 1, edge + 1))
+
+
+def format_attributes(obj, names):
+    attrs = ["{} = {}".format(attr, obj[attr]) for attr in names if attr in obj]
+    return ", ".join(attrs)
+
+
+def to_dot(graph):
+    directed = graph["directed"]
+    graph_type = ["graph", "digraph"][directed]
+    edge_op = ["--", "->"][directed]
+
+    print('{} "{}" {{'.format(graph_type, graph["name"]))
+    print("frequency = {}".format(graph["frequency"]))
+    for obj in graph["objects"]:
+        attrs = format_attributes(
+            obj, ("weight", "forbidden", "fillcolor", "style")
+        )
+        if attrs:
+            print("{} [{}]".format(obj["name"], attrs))
+        else:
+            print("{}".format(obj["name"]))
+    for obj in graph["edges"]:
+        tail = graph["objects"][obj["tail"]]["name"]
+        head = graph["objects"][obj["head"]]["name"]
+        attrs = format_attributes(obj, ("color",))
+        if attrs:
+            print("{} {} {} [{}]".format(tail, edge_op, head, attrs))
+        else:
+            print("{} {} {}".format(tail, edge_op, head))
+    print("}")
+
+
+def color_subgraph(graph, subgraph):
+    # "burlywood", "orchid"
+    for node in subgraph["nodes"]:
+        graph["objects"][node]["style"] = "filled"
+        graph["objects"][node]["fillcolor"] = "yellow"
+    for node in subgraph["inputs"]:
+        graph["objects"][node]["style"] = "filled"
+        graph["objects"][node]["fillcolor"] = "brown"
+    for node in subgraph["outputs"]:
+        graph["objects"][node]["style"] = "filled"
+        graph["objects"][node]["fillcolor"] = "purple"
+
+
+def main():
+    """
+    Convert a graph in JSON format to DIMACS or DOT format.
+    """
+    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser.add_argument("--fmt", default="dot", choices=("dimacs", "dot"))
+    parser.add_argument("--subgraph")
+    parser.add_argument("path")
+    args = parser.parse_args()
+    with open(args.path, "r") as f:
+        graph = json.load(f)
+    if args.fmt == "dot":
+        if args.subgraph:
+            if args.subgraph == "-":
+                subgraph = json.load(sys.stdin)
+            else:
+                with open(args.subgraph, "r") as f:
+                    subgraph = json.load(f)
+            color_subgraph(graph, subgraph)
+        to_dot(graph)
+    else:
+        to_dimacs(graph)
+
+
+if __name__ == "__main__":
+    main()
