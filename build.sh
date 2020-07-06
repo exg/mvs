@@ -2,11 +2,11 @@
 
 set -e
 
-realpath () {
-    python -c "import os.path, sys; print os.path.realpath(sys.argv[1])" "$1"
-}
+root=$(
+    cd "$(dirname "$0")" &&
+    pwd -P
+)
 
-root="$(dirname "$(realpath "$0")")"
 mkdir -p "$root"/build
 cd "$root"/build
 if [ $# -eq 0 ]; then
