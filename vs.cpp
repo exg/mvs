@@ -46,8 +46,7 @@ static intset config_exclusion(const DFG &dfg, const intset &config)
 class VSFinder {
 public:
     VSFinder(const DFG &dfg, const Subgraph &outputs)
-        : dfg_(&dfg)
-        , config_(dfg, outputs.closure())
+        : config_(dfg, outputs.closure())
         , F_(config_exclusion(dfg, outputs.nodes()))
     {
     }
@@ -56,7 +55,6 @@ public:
                const std::function<void(const IOSubgraph &)> &output_cb);
 
 private:
-    const DFG *dfg_;
     IOSubgraph config_;
     intset F_;
 };
@@ -64,9 +62,10 @@ private:
 void VSFinder::visit(int max_num_in,
                      const std::function<void(const IOSubgraph &)> &output_cb)
 {
+    const DFG &dfg = config_.dfg();
     int num_perm_in = 0;
     for (auto &u : config_.inputs()) {
-        if (u >= dfg_->num_nodes() || F_.contains(u))
+        if (u >= dfg.num_nodes() || F_.contains(u))
             num_perm_in++;
     }
 
@@ -84,7 +83,7 @@ void VSFinder::visit(int max_num_in,
         output_cb(config_);
 
         if (VERIFY)
-            assert(verify_config(*dfg_, config_));
+            assert(verify_config(dfg, config_));
 
         return;
     }
@@ -95,7 +94,7 @@ void VSFinder::visit(int max_num_in,
     config_.remove(id);
     intset F_prev(F_);
     F_.add(id);
-    F_.add(dfg_->pred(id));
+    F_.add(dfg.pred(id));
     visit(max_num_in, output_cb);
     F_ = F_prev;
 }
