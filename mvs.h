@@ -44,11 +44,7 @@ public:
                                       int max_num_out,
                                       IterType itype,
                                       uint8_t flags);
-    const DFG &dfg() const { return *dfg_; }
     const intset &nodes() const { return config_.nodes(); }
-    const intset &nodes_left() const { return nodes_left_; }
-    const vset<int> &inputs() const { return config_.inputs(); }
-    const vset<int> &outputs() const { return config_.outputs(); }
 
 private:
     int find_best_recursion_node(int max_num_in,
@@ -112,7 +108,7 @@ private:
 
 class IOAnalysis {
 public:
-    IOAnalysis(const MVSFinder &finder);
+    IOAnalysis(const IOSubgraph &config, const intset &nodes_left);
     int num_perm_in() const { return num_perm_in_; }
     int num_perm_out() const { return num_perm_out_; }
     int num_shared_non_perm_out() const { return num_shared_non_perm_out_; }
@@ -120,7 +116,7 @@ public:
     double best_rnode_weights(int n);
 
 private:
-    const MVSFinder *finder_;
+    const IOSubgraph &config_;
     int num_perm_in_ = 0;
     int num_perm_out_ = 0;
     int num_shared_non_perm_out_ = 0;

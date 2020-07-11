@@ -145,7 +145,7 @@ void MVSFinder::visit(double dels,
     }
 
     // pruning
-    IOAnalysis analysis(*this);
+    IOAnalysis analysis(config_, nodes_left_);
 
     bool prune = false;
     int required_dels_in = 0;
@@ -560,19 +560,16 @@ MVSFinder::MVSFinder(DFG *dfg)
               });
 }
 
-IOAnalysis::IOAnalysis(const MVSFinder &finder)
-    : finder_(&finder)
+IOAnalysis::IOAnalysis(const IOSubgraph &config, const intset &nodes_left)
+    : config_(config)
 {
-    for (auto &v : finder.inputs()) {
-        if (input_is_permanent(finder.dfg(),
-                               finder.nodes(),
-                               finder.nodes_left(),
-                               v)) {
+    for (auto &v : config.inputs()) {
+        if (input_is_permanent(config.dfg(), config.nodes(), nodes_left, v)) {
             num_perm_in_++;
         } else {
             inputs_.add(v, 0);
-            for (auto &z : finder.dfg().out_edges(v)) {
-                if (finder.nodes().contains(z)) {
+            for (auto &z : config.dfg().out_edges(v)) {
+                if (config.nodes().contains(z)) {
                     double &value = rnodes_.add(z, 0);
                     value++;
                 }
@@ -582,8 +579,8 @@ IOAnalysis::IOAnalysis(const MVSFinder &finder)
 
     for (auto &input : inputs_) {
         int v = input.first;
-        for (auto &z : finder.dfg().out_edges(v)) {
-            if (finder.nodes().contains(z)) {
+        for (auto &z : config.dfg().out_edges(v)) {
+            if (config.nodes().contains(z)) {
                 double &value = rnodes_.add(z, 0);
 #if 1
                 input.second += 1. / value;
@@ -595,11 +592,8 @@ IOAnalysis::IOAnalysis(const MVSFinder &finder)
         }
     }
 
-    for (auto &output : finder.outputs())
-        if (is_permanent(finder.dfg(),
-                         finder.nodes(),
-                         finder.nodes_left(),
-                         output))
+    for (auto &output : config.outputs())
+        if (is_permanent(config.dfg(), config.nodes(), nodes_left, output))
             num_perm_out_++;
         else {
             double &value = rnodes_.add(output, 0);
@@ -625,7 +619,7 @@ double IOAnalysis::best_input_weights(int n)
 double IOAnalysis::best_rnode_weights(int n)
 {
     for (auto &entry : rnodes_)
-        entry.second = finder_->dfg().weight(entry.first);
+        entry.second = config_.dfg().weight(entry.first);
     std::sort(rnodes_.begin(),
               rnodes_.end(),
               [](const std::pair<int, double> p1,
