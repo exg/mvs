@@ -72,6 +72,20 @@ int MVSFinder::find_best_recursion_node(int max_num_in,
     return id;
 }
 
+static double sum_smallest(vmap<int, double> &map, int n)
+{
+    std::sort(map.begin(),
+              map.end(),
+              [](const std::pair<int, double> p1,
+                 const std::pair<int, double> p2) {
+                  return p1.second < p2.second;
+              });
+    double sum = 0;
+    for (int i = 0; i < n; i++)
+        sum += map[i].second;
+    return sum;
+}
+
 void MVSFinder::visit(double dels,
                       bool single,
                       int &max_weight,
@@ -126,7 +140,7 @@ void MVSFinder::visit(double dels,
                 prune = true;
             }
         } else {
-            required_dels_in = ceil(analysis.best_input_weights(n));
+            required_dels_in = ceil(sum_smallest(analysis.get_inputs(), n));
         }
     }
     if (config_.num_out() - max_num_out > 0) {
@@ -146,8 +160,9 @@ void MVSFinder::visit(double dels,
     });
     double rnodes_weight = 0;
     if (!prune) {
-        rnodes_weight = analysis.best_rnode_weights(
-            required_dels_in + required_dels_out - num_shared_non_perm_out);
+        rnodes_weight = sum_smallest(analysis.get_rnodes(),
+                                     required_dels_in + required_dels_out -
+                                         num_shared_non_perm_out);
     }
 
     if ((flags_ & (1 << 3)) && rnodes_weight > dels) {

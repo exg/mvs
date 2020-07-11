@@ -42,7 +42,6 @@ static bool input_is_permanent(const DFG &dfg,
 }
 
 IOAnalysis::IOAnalysis(const IOSubgraph &config, const intset &nodes_left)
-    : config_(config)
 {
     for (auto &v : config.inputs()) {
         if (input_is_permanent(config.dfg(), config.nodes(), nodes_left, v)) {
@@ -81,36 +80,9 @@ IOAnalysis::IOAnalysis(const IOSubgraph &config, const intset &nodes_left)
             if (value >= 1)
                 num_shared_non_perm_out_++;
         }
-}
 
-double IOAnalysis::best_input_weights(int n)
-{
-    std::sort(inputs_.begin(),
-              inputs_.end(),
-              [](const std::pair<int, double> p1,
-                 const std::pair<int, double> p2) {
-                  return p1.second < p2.second;
-              });
-    double sum = 0;
-    for (int i = 0; i < n; i++)
-        sum += inputs_[i].second;
-    return sum;
-}
-
-double IOAnalysis::best_rnode_weights(int n)
-{
     for (auto &entry : rnodes_)
-        entry.second = config_.dfg().weight(entry.first);
-    std::sort(rnodes_.begin(),
-              rnodes_.end(),
-              [](const std::pair<int, double> p1,
-                 const std::pair<int, double> p2) {
-                  return p1.second < p2.second;
-              });
-    double sum = 0;
-    for (int i = 0; i < n; i++)
-        sum += rnodes_[i].second;
-    return sum;
+        entry.second = config.dfg().weight(entry.first);
 }
 
 int IOAnalysis::num_perm_in(const IOSubgraph &config, const intset &nodes_left)
