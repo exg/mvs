@@ -6,7 +6,15 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 find_package(nlohmann_json REQUIRED)
 link_libraries(nlohmann_json::nlohmann_json)
 
-add_library(graph STATIC common.cpp cluster.cpp dfg.cpp graph.cpp mvs.cpp vs.cpp)
+add_library(graph STATIC
+  common.cpp
+  cluster.cpp
+  dfg.cpp
+  graph.cpp
+  io.cpp
+  mvs.cpp
+  vs.cpp
+)
 target_compile_options(graph PRIVATE -Wall -Wextra -Wno-sign-compare -Wno-unused-function)
 add_executable(config_info config_info.cpp)
 target_link_libraries(config_info graph)

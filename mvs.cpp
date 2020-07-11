@@ -16,6 +16,7 @@
 #include "mvs.h"
 #include "common.h"
 #include "graph.h"
+#include "io.h"
 #include "vs.h"
 #include <cassert>
 #include <cmath>
@@ -38,32 +39,6 @@ static bool is_sink(const DFG &dfg, const intset &config, int u)
             return false;
     }
     return true;
-}
-
-static bool is_permanent(const DFG &dfg,
-                         const intset &config,
-                         const intset &nodes_left,
-                         int u)
-{
-    if (!nodes_left.contains(u))
-        return true;
-    if (!dfg.pred(u).intersects_difference(config, nodes_left))
-        return false;
-    if (!dfg.succ(u).intersects_difference(config, nodes_left))
-        return false;
-    return true;
-}
-
-static bool input_is_permanent(const DFG &dfg,
-                               const intset &config,
-                               const intset &nodes_left,
-                               int u)
-{
-    for (auto &v : dfg.out_edges(u)) {
-        if (config.contains(v) && is_permanent(dfg, config, nodes_left, v))
-            return true;
-    }
-    return false;
 }
 
 int MVSFinder::find_best_recursion_node(int max_num_in,
@@ -551,94 +526,4 @@ MVSFinder::MVSFinder(DFG *dfg)
               [](const IOSubgraph &i1, const IOSubgraph &i2) {
                   return i1.weight() > i2.weight();
               });
-}
-
-IOAnalysis::IOAnalysis(const IOSubgraph &config, const intset &nodes_left)
-    : config_(config)
-{
-    for (auto &v : config.inputs()) {
-        if (input_is_permanent(config.dfg(), config.nodes(), nodes_left, v)) {
-            num_perm_in_++;
-        } else {
-            inputs_.add(v, 0);
-            for (auto &z : config.dfg().out_edges(v)) {
-                if (config.nodes().contains(z)) {
-                    double &value = rnodes_.add(z, 0);
-                    value++;
-                }
-            }
-        }
-    }
-
-    for (auto &input : inputs_) {
-        int v = input.first;
-        for (auto &z : config.dfg().out_edges(v)) {
-            if (config.nodes().contains(z)) {
-                double &value = rnodes_.add(z, 0);
-#if 1
-                input.second += 1. / value;
-#else
-                if (value == 1)
-                    input.second++;
-#endif
-            }
-        }
-    }
-
-    for (auto &output : config.outputs())
-        if (is_permanent(config.dfg(), config.nodes(), nodes_left, output))
-            num_perm_out_++;
-        else {
-            double &value = rnodes_.add(output, 0);
-            if (value >= 1)
-                num_shared_non_perm_out_++;
-        }
-}
-
-double IOAnalysis::best_input_weights(int n)
-{
-    std::sort(inputs_.begin(),
-              inputs_.end(),
-              [](const std::pair<int, double> p1,
-                 const std::pair<int, double> p2) {
-                  return p1.second < p2.second;
-              });
-    double sum = 0;
-    for (int i = 0; i < n; i++)
-        sum += inputs_[i].second;
-    return sum;
-}
-
-double IOAnalysis::best_rnode_weights(int n)
-{
-    for (auto &entry : rnodes_)
-        entry.second = config_.dfg().weight(entry.first);
-    std::sort(rnodes_.begin(),
-              rnodes_.end(),
-              [](const std::pair<int, double> p1,
-                 const std::pair<int, double> p2) {
-                  return p1.second < p2.second;
-              });
-    double sum = 0;
-    for (int i = 0; i < n; i++)
-        sum += rnodes_[i].second;
-    return sum;
-}
-
-int IOAnalysis::num_perm_in(const IOSubgraph &config, const intset &nodes_left)
-{
-    int n = 0;
-    for (auto &v : config.inputs())
-        if (input_is_permanent(config.dfg(), config.nodes(), nodes_left, v))
-            n++;
-    return n;
-}
-
-int IOAnalysis::num_perm_out(const IOSubgraph &config, const intset &nodes_left)
-{
-    int n = 0;
-    for (auto &v : config.outputs())
-        if (is_permanent(config.dfg(), config.nodes(), nodes_left, v))
-            n++;
-    return n;
 }
