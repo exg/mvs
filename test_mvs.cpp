@@ -2,41 +2,24 @@
 #include <cassert>
 #include <fstream>
 
-static void test_crypt(const char *path)
-{
-    std::ifstream input(path);
-    auto dfg = DFG::make_dfg(input, false);
-    auto finder = MVSFinder(dfg.get());
-    auto itype = MVSFinder::IterType::LINEAR_REV;
-    uint8_t flags = 0xff;
-    auto output = finder.enumerate(1, 1, itype, flags);
-    assert(output.size() == 64);
-    output = finder.enumerate(2, 2, itype, flags);
-    assert(output.size() == 14);
-}
-
-static void test_hadamard(const char *path)
-{
-    std::ifstream input(path);
-    auto dfg = DFG::make_dfg(input, false);
-    auto finder = MVSFinder(dfg.get());
-    auto itype = MVSFinder::IterType::LINEAR_REV;
-    uint8_t flags = 0xff;
-    auto output = finder.enumerate(18, 18, itype, flags);
-    assert(output.size() == 1);
-    output = finder.enumerate(17, 17, itype, flags);
-    assert(output.size() == 1);
-    output = finder.enumerate(16, 16, itype, flags);
-    assert(output.size() == 1);
-    output = finder.enumerate(15, 15, itype, flags);
-    assert(output.size() == 16);
-    output = finder.enumerate(14, 14, itype, flags);
-    assert(output.size() == 8);
-}
-
 int main(int argc, char **argv)
 {
-    assert(argc == 3);
-    test_crypt(argv[1]);
-    test_hadamard(argv[2]);
+    if (argc != 5)
+        return 1;
+    int max_num_in;
+    if (!parse_integer(argv[2], max_num_in, 0, INT_MAX))
+        return 1;
+    int max_num_out;
+    if (!parse_integer(argv[3], max_num_out, 0, INT_MAX))
+        return 1;
+    int output_size;
+    if (!parse_integer(argv[4], output_size, 0, INT_MAX))
+        return 1;
+    std::ifstream input(argv[1]);
+    auto dfg = DFG::make_dfg(input, false);
+    auto finder = MVSFinder(dfg.get());
+    auto itype = MVSFinder::IterType::LINEAR_REV;
+    uint8_t flags = 0xff;
+    auto output = finder.enumerate(max_num_in, max_num_out, itype, flags);
+    assert(output.size() == output_size);
 }

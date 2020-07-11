@@ -35,6 +35,24 @@ enable_testing()
 add_test(NAME intset COMMAND test_intset)
 add_test(NAME dfs COMMAND test_dfs)
 add_test(NAME mis COMMAND test_mis)
-add_test(NAME mvs COMMAND test_mvs
+add_test(NAME mvs_crypt_1 COMMAND test_mvs
   ${CMAKE_SOURCE_DIR}/data/DFG_crypt_Transform_entry.45.txt
-  ${CMAKE_SOURCE_DIR}/data/DFG_hadamard_HadamardSAD8x8_for.body.1.txt)
+  1 1 64)
+add_test(NAME mvs_crypt_2 COMMAND test_mvs
+  ${CMAKE_SOURCE_DIR}/data/DFG_crypt_Transform_entry.45.txt
+  2 2 14)
+add_test(NAME mvs_hadamard_18 COMMAND test_mvs
+  ${CMAKE_SOURCE_DIR}/data/DFG_hadamard_HadamardSAD8x8_for.body.1.txt
+  18 18 1)
+add_test(NAME mvs_hadamard_17 COMMAND test_mvs
+  ${CMAKE_SOURCE_DIR}/data/DFG_hadamard_HadamardSAD8x8_for.body.1.txt
+  17 17 1)
+add_test(NAME mvs_hadamard_16 COMMAND test_mvs
+  ${CMAKE_SOURCE_DIR}/data/DFG_hadamard_HadamardSAD8x8_for.body.1.txt
+  16 16 1)
+add_test(NAME mvs_hadamard_15 COMMAND test_mvs
+  ${CMAKE_SOURCE_DIR}/data/DFG_hadamard_HadamardSAD8x8_for.body.1.txt
+  15 15 16)
+add_test(NAME mvs_hadamard_14 COMMAND test_mvs
+  ${CMAKE_SOURCE_DIR}/data/DFG_hadamard_HadamardSAD8x8_for.body.1.txt
+  14 14 8)
