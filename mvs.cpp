@@ -78,19 +78,12 @@ int MVSFinder::find_best_recursion_node(int max_num_in,
         bool sink = is_sink(*dfg_, nodes(), u);
 
         if (source || sink) {
-            std::pair<int, int> delta(0, 0);
             nodes_left_.remove(u);
-            for (auto &v : config_.inputs()) {
-                if (input_is_permanent(*dfg_, nodes(), nodes_left_, v))
-                    delta.first++;
-            }
-            for (auto &output : config_.outputs())
-                if (is_permanent(*dfg_, nodes(), nodes_left_, output))
-                    delta.second++;
+            std::pair<int, int> delta {
+                IOAnalysis::num_perm_in(config_, nodes_left_) - num_perm_in,
+                IOAnalysis::num_perm_out(config_, nodes_left_) - num_perm_out,
+            };
             nodes_left_.add(u);
-
-            delta.first -= num_perm_in;
-            delta.second -= num_perm_out;
 
             if (max_num_in - num_perm_in > max_num_out - num_perm_out)
                 std::swap(delta.first, delta.second);
@@ -630,4 +623,22 @@ double IOAnalysis::best_rnode_weights(int n)
     for (int i = 0; i < n; i++)
         sum += rnodes_[i].second;
     return sum;
+}
+
+int IOAnalysis::num_perm_in(const IOSubgraph &config, const intset &nodes_left)
+{
+    int n = 0;
+    for (auto &v : config.inputs())
+        if (input_is_permanent(config.dfg(), config.nodes(), nodes_left, v))
+            n++;
+    return n;
+}
+
+int IOAnalysis::num_perm_out(const IOSubgraph &config, const intset &nodes_left)
+{
+    int n = 0;
+    for (auto &v : config.outputs())
+        if (is_permanent(config.dfg(), config.nodes(), nodes_left, v))
+            n++;
+    return n;
 }
