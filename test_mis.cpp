@@ -1,21 +1,21 @@
 #include "graph.h"
 #include <cassert>
 
-static void find_mis(Graph &graph, bool bk, unsigned count)
+template <typename T>
+static void find_mis(Graph &graph, unsigned count)
 {
     auto size = graph.num_nodes();
-    MISFinder finder(
+    T finder(
         &graph,
-        bk,
-        [size](const intset &name) {},
+        [](const intset &name) {},
         [](const intset &name, int id, bool add) {});
     assert(finder.get_count() == count);
 }
 
 static void test(Graph &graph, unsigned count)
 {
-    find_mis(graph, false, count);
-    find_mis(graph, true, count);
+    find_mis<MISFinder>(graph, count);
+    find_mis<MISFinderBK>(graph, count);
 }
 
 int main()

@@ -80,10 +80,9 @@ void Graph::invert()
     }
 }
 
-MISFinder::MISFinder(const Graph *graph,
-                     bool use_bk,
-                     std::function<void(const intset &)> output_cb,
-                     std::function<void(const intset &, int, bool)> update_cb)
+MISFinderBase::MISFinderBase(const Graph *graph,
+                             std::function<void(const intset &)> output_cb,
+                             std::function<void(const intset &, int, bool)> update_cb)
     : graph_(graph)
     , config_(graph->num_nodes())
     , nodes_left_(graph->num_nodes())
@@ -91,21 +90,25 @@ MISFinder::MISFinder(const Graph *graph,
     , output_cb_(std::move(output_cb))
     , update_cb_(std::move(update_cb))
 {
-    auto size = graph_->num_nodes();
-    for (int i = 0; i < size; i++)
+    for (int i = 0; i < graph_->num_nodes(); i++)
         nodes_left_.add(i);
-    if (use_bk)
-        bk_visit();
-    else {
-        num_edges_.resize(size);
-        g_num_edges_ = 0;
-        for (int i = 0; i < size; i++) {
-            config_.add(i);
-            num_edges_[i] = graph_->edges(i).size();
-            g_num_edges_ += num_edges_[i];
-        }
-        visit();
+}
+
+MISFinder::MISFinder(const Graph *graph,
+                     std::function<void(const intset &)> output_cb,
+                     std::function<void(const intset &, int, bool)> update_cb)
+    : MISFinderBase(graph, std::move(output_cb), std::move(update_cb))
+{
+    auto size = graph_->num_nodes();
+    num_edges_.resize(size);
+    g_num_edges_ = 0;
+    for (int i = 0; i < size; i++) {
+        config_.add(i);
+        num_edges_[i] = graph_->edges(i).size();
+        g_num_edges_ += num_edges_[i];
+        update_cb_(config_, i, true);
     }
+    visit();
 }
 
 void MISFinder::visit()
@@ -175,6 +178,14 @@ void MISFinder::visit()
     nodes_left_.add(id);
 }
 
+MISFinderBK::MISFinderBK(const Graph *graph,
+                         std::function<void(const intset &)> output_cb,
+                         std::function<void(const intset &, int, bool)> update_cb)
+    : MISFinderBase(graph, std::move(output_cb), std::move(update_cb))
+{
+    visit();
+}
+
 static void find_pivot(const Graph &graph,
                        const intset &S,
                        const intset &P,
@@ -194,7 +205,7 @@ static void find_pivot(const Graph &graph,
     }
 }
 
-void MISFinder::bk_visit()
+void MISFinderBK::visit()
 {
     calls_++;
 
@@ -231,7 +242,7 @@ void MISFinder::bk_visit()
         config_.add(id);
         update_cb_(config_, id, true);
 
-        bk_visit();
+        visit();
 
         config_.remove(id);
         update_cb_(config_, id, false);

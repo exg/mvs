@@ -44,29 +44,47 @@ private:
     std::vector<Node> nodes_;
 };
 
-class MISFinder {
+class MISFinderBase {
 public:
-    MISFinder(const Graph *graph,
-              bool use_bk,
-              std::function<void(const intset &)> output_cb,
-              std::function<void(const intset &, int, bool)> update_cb);
+    MISFinderBase(const Graph *graph,
+                  std::function<void(const intset &)> output_cb,
+                  std::function<void(const intset &, int, bool)> update_cb);
+    virtual ~MISFinderBase() = default;
 
     unsigned get_count() const { return count_; }
     unsigned get_calls() const { return calls_; }
 
-private:
-    void visit();
-    void bk_visit();
-
+protected:
     const Graph *graph_;
     intset config_;
     intset nodes_left_;
     intset f_nodes_;
     unsigned count_ = 0;
     unsigned calls_ = 0;
-    std::vector<int> num_edges_;
-    int g_num_edges_;
 
     std::function<void(const intset &)> output_cb_;
     std::function<void(const intset &, int, bool)> update_cb_;
+};
+
+class MISFinder : public MISFinderBase {
+public:
+    MISFinder(const Graph *graph,
+              std::function<void(const intset &)> output_cb,
+              std::function<void(const intset &, int, bool)> update_cb);
+
+private:
+    void visit();
+
+    std::vector<int> num_edges_;
+    int g_num_edges_;
+};
+
+class MISFinderBK : public MISFinderBase {
+public:
+    MISFinderBK(const Graph *graph,
+                std::function<void(const intset &)> output_cb,
+                std::function<void(const intset &, int, bool)> update_cb);
+
+private:
+    void visit();
 };

@@ -21,8 +21,6 @@
 #include <cassert>
 #include <cmath>
 
-static const bool USE_BK = false;
-
 static bool is_source(const DFG &dfg, const intset &config, int u)
 {
     for (auto &v : dfg.in_edges(u)) {
@@ -423,21 +421,6 @@ void MVSFinder::unlink_cluster(const SCluster &cluster)
     }
 }
 
-void MVSFinder::add_config()
-{
-    mvs_vec_.emplace_back(config_);
-}
-
-void MVSFinder::update_config(int id, bool add)
-{
-    for (auto &v : v_clusters_[id].nodes) {
-        if (add)
-            config_.add(v);
-        else
-            config_.remove(v);
-    }
-}
-
 static void dump_v_graph(const Graph &v_graph,
                          const std::vector<VCluster> &v_clusters)
 {
@@ -509,17 +492,16 @@ MVSFinder::MVSFinder(DFG *dfg)
 
     v_graph.invert();
 
-    if (!USE_BK) {
-        for (int i = 0; i < dfg->num_nodes(); i++)
-            if (!F.contains(i))
-                config_.add(i);
-    }
     MISFinder finder(
         &v_graph,
-        USE_BK,
-        [this](const intset &) { this->add_config(); },
+        [this](const intset &) { mvs_vec_.emplace_back(config_); },
         [this](const intset &, int id, bool add) {
-            this->update_config(id, add);
+            for (auto v : v_clusters_[id].nodes) {
+                if (add)
+                    config_.add(v);
+                else
+                    config_.remove(v);
+            }
         });
 
     s_clusters_ = scluster_enumerate(*dfg_);

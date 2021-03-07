@@ -68,8 +68,6 @@ private:
                     int max_num_out);
     void link_cluster(const SCluster &cluster);
     void unlink_cluster(const SCluster &cluster);
-    void add_config();
-    void update_config(int id, bool add);
 
     DFG *dfg_;
     std::vector<VCluster> v_clusters_;

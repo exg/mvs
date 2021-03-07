@@ -18,14 +18,14 @@
 #include <ostream>
 #include <unistd.h>
 
-static void find_mis(Graph *graph, bool bk)
+template <typename T>
+static void find_mis(Graph *graph)
 {
     auto size = graph->num_nodes();
     double start = get_time();
-    MISFinder finder(
+    T finder(
         graph,
-        bk,
-        [size](const intset &name) {},
+        [](const intset &name) {},
         [](const intset &name, int id, bool add) {});
     double end = get_time();
 
@@ -59,5 +59,8 @@ int main(int argc, char **argv)
     if (invert)
         graph->invert();
 
-    find_mis(graph.get(), use_bk);
+    if (use_bk)
+        find_mis<MISFinderBK>(graph.get());
+    else
+        find_mis<MISFinder>(graph.get());
 }
