@@ -1,12 +1,17 @@
 # Overview
 
 mvs is an implementation in the C++14 language of the algorithm
-described in [1] for computing the maximum subgraphs of a directed
-acyclic graph under convexity, input and output constraints.
+described in [Maximum Convex Subgraphs Under I/O Constraint for
+Automatic Identification of Custom
+Instructions](https://doi.org/10.1109/TCAD.2014.2387375) for computing
+the maximum subgraphs of a directed acyclic graph under convexity,
+input and output constraints.
 
 # Installation
 
-Install **CMake** and use the included CMake script to build mvs:
+Install [nlohmann-json](https://json.nlohmann.me/) and
+[cmake](https://cmake.org/) and use the included CMake script to build
+mvs:
 ```
 mkdir build
 cd build
@@ -67,10 +72,12 @@ The mvs repository also contains the following files and directories:
 
 * **data**
 
-the benchmark graphs used in [1], in DIMACS format, DOT format [2] and
-DOT JSON format [3]. In the DOT formats, node objects have the
-additional attributes **weight** and **forbidden**, while graph
-objects have the additional attribute **frequency**.
+benchmark graphs in DIMACS format,
+[DOT](https://www.graphviz.org/doc/info/lang.html) format and [DOT
+JSON](https://graphviz.org/docs/outputs/json/) format. In the DOT
+formats, node objects have the additional attributes **weight** and
+**forbidden**, while graph objects have the additional attribute
+**frequency**.
 
 * **scripts/convert**
 
@@ -79,11 +86,3 @@ script to convert a graph in DOT JSON format to DIMACS or DOT format. Usage:
 `convert --fmt dimacs FILE.json > FILE.dimacs`
 
 `convert --fmt dot FILE.json > FILE.dot`
-
-# References
-
-[1] [Emanuele Giaquinta, Anadi Mishra, Laura Pozzi: Maximum Convex Subgraphs Under I/O Constraint for Automatic Identification of Custom Instructions](https://doi.org/10.1109/TCAD.2014.2387375)
-
-[2] [The DOT Language](https://www.graphviz.org/doc/info/lang.html)
-
-[3] [The DOT JSON format](https://www.graphviz.org/doc/info/output.html#d:dot_json)
