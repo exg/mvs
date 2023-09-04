@@ -1,5 +1,6 @@
 #include "intset.h"
 #include <cassert>
+#include <cstdio>
 
 enum { N = 128 };
 

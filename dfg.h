@@ -2,6 +2,7 @@
 
 #include "intset.h"
 #include "vset.h"
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <string>

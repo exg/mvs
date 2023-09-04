@@ -1,5 +1,6 @@
 #include "mvs.h"
 #include <cassert>
+#include <climits>
 #include <fstream>
 
 int main(int argc, char **argv)
