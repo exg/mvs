@@ -9,9 +9,8 @@ input and output constraints.
 
 # Installation
 
-Install [nlohmann-json](https://json.nlohmann.me/) and
-[cmake](https://cmake.org/) and use the included CMake script to build
-mvs:
+Install [cmake](https://cmake.org/) and use the included CMake script
+to build mvs:
 ```
 mkdir build
 cd build
