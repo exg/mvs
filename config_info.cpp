@@ -14,8 +14,13 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common.h"
+#include "dfg.h"
+#include "intset.h"
+#include "nlohmann/json.hpp"
 #include <cstdio>
-#include <ostream>
+#include <iostream>
+#include <memory>
+#include <string>
 
 int main(int argc, char *argv[])
 {

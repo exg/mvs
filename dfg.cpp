@@ -15,12 +15,19 @@
 
 #include "dfg.h"
 #include "common.h"
+#include "vset.h"
+#include <algorithm>
 #include <cassert>
 #include <climits>
+#include <cstdlib>
+#include <functional>
+#include <initializer_list>
+#include <istream>
 #include <list>
 #include <memory>
 #include <stack>
 #include <stdexcept>
+#include <string>
 #include <utility>
 
 DFG::DFG(std::initializer_list<std::pair<int, int>> list)

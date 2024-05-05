@@ -15,9 +15,16 @@
 
 #include "graph.h"
 #include "common.h"
+#include "intset.h"
+#include <algorithm>
 #include <cassert>
 #include <climits>
+#include <functional>
+#include <initializer_list>
+#include <istream>
+#include <memory>
 #include <string>
+#include <utility>
 
 Graph::Graph(std::initializer_list<std::pair<int, int>> list)
 {

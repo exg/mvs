@@ -14,12 +14,23 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "mvs.h"
+#include "cluster.h"
 #include "common.h"
+#include "dfg.h"
 #include "graph.h"
+#include "intset.h"
 #include "io.h"
-#include "vs.h"
+#include "nlohmann/json.hpp"
+#include "vset.h"
+#include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <iostream>
+#include <memory>
+#include <utility>
+#include <vector>
 
 static bool is_source(const DFG &dfg, const intset &config, int u)
 {

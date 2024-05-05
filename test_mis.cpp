@@ -1,4 +1,5 @@
 #include "graph.h"
+#include "intset.h"
 #include <cassert>
 
 template <typename T>

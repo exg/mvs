@@ -14,7 +14,10 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "cluster.h"
+#include "dfg.h"
 #include "vs.h"
+#include <utility>
+#include <vector>
 
 std::vector<SCluster> scluster_enumerate(const DFG &dfg)
 {

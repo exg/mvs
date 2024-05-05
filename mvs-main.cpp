@@ -14,11 +14,16 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common.h"
+#include "dfg.h"
 #include "mvs.h"
+#include "nlohmann/json.hpp"
 #include <chrono>
 #include <climits>
+#include <cstdint>
 #include <cstdio>
-#include <ostream>
+#include <iostream>
+#include <memory>
+#include <string>
 #include <unistd.h>
 
 static bool parse_flags(const std::string &str, uint8_t &flags)

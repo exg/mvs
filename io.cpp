@@ -14,6 +14,8 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "io.h"
+#include "dfg.h"
+#include "intset.h"
 
 static bool is_permanent(const DFG &dfg,
                          const intset &config,

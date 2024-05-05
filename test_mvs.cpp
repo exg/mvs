@@ -1,6 +1,9 @@
+#include "common.h"
+#include "dfg.h"
 #include "mvs.h"
 #include <cassert>
 #include <climits>
+#include <cstdint>
 #include <fstream>
 
 int main(int argc, char **argv)

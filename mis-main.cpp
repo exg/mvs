@@ -13,10 +13,12 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common.h"
 #include "graph.h"
+#include "intset.h"
+#include "nlohmann/json.hpp"
 #include <chrono>
-#include <ostream>
+#include <iostream>
+#include <memory>
 #include <unistd.h>
 
 template <typename T>

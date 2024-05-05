@@ -14,12 +14,17 @@
    along with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
 #include "common.h"
+#include "dfg.h"
+#include "nlohmann/json.hpp"
 #include "vs.h"
 #include <chrono>
 #include <climits>
 #include <cstdio>
-#include <ostream>
+#include <iostream>
+#include <memory>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 int main(int argc, char *argv[])
 {
