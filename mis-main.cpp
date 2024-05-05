@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "graph.h"
+#include <chrono>
 #include <ostream>
 #include <unistd.h>
 
@@ -22,19 +23,20 @@ template <typename T>
 static void find_mis(Graph *graph)
 {
     auto size = graph->num_nodes();
-    double start = get_time();
+    const auto start = std::chrono::steady_clock::now();
     T finder(
         graph,
         [](const intset &name) {},
         [](const intset &name, int id, bool add) {});
-    double end = get_time();
+    const auto end = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = end - start;
 
     nlohmann::json json = {
         {"calls", finder.get_calls()},
         {"num_MIS", finder.get_count()},
         {"num_edges", graph->num_edges() / 2},
         {"num_nodes", graph->num_nodes()},
-        {"time", end - start},
+        {"time", elapsed.count()},
     };
     std::cout << json.dump(4) << std::endl;
 }

@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "vs.h"
+#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <ostream>
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
         return 1;
 
     double max_weight = 0;
-    double start = get_time();
+    const auto start = std::chrono::steady_clock::now();
     std::vector<IOSubgraph> output;
     vs_enumerate(*dfg,
                  max_num_in,
@@ -80,7 +81,8 @@ int main(int argc, char *argv[])
                      }
                      output.emplace_back(subgraph);
                  });
-    double end = get_time();
+    const auto end = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = end - start;
 
     nlohmann::json report = {
         {"max_weight", max_weight},
@@ -88,7 +90,7 @@ int main(int argc, char *argv[])
         {"num_nodes", dfg->num_nodes()},
         {"num_subgraphs", output.size()},
         {"subgraphs", output},
-        {"time", end - start},
+        {"time", elapsed.count()},
     };
     std::cout << report.dump(4) << std::endl;
 

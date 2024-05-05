@@ -16,7 +16,6 @@
 #include "common.h"
 #include <cmath>
 #include <cstdlib>
-#include <sys/time.h>
 
 bool parse_integer(const std::string &str, int &v, int a, int b)
 {
@@ -41,13 +40,6 @@ std::vector<std::string> split(const std::string &s, char c)
 
     fields.push_back(s.substr(i, s.length()));
     return fields;
-}
-
-double get_time()
-{
-    struct timeval tp;
-    gettimeofday(&tp, nullptr);
-    return tp.tv_sec + tp.tv_usec * 1e-6;
 }
 
 // Knuth's floating point comparison, see The Art of Computer Programming Volume

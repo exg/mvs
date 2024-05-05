@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "mvs.h"
+#include <chrono>
 #include <climits>
 #include <cstdio>
 #include <ostream>
@@ -104,10 +105,11 @@ int main(int argc, char *argv[])
     if (dfg->forbidden().size() == dfg->num_nodes())
         return 1;
 
-    double start = get_time();
+    const auto start = std::chrono::steady_clock::now();
     MVSFinder finder(dfg.get());
     auto output = finder.enumerate(max_num_in, max_num_out, itype, flags);
-    double end = get_time();
+    const auto end = std::chrono::steady_clock::now();
+    const std::chrono::duration<double> elapsed = end - start;
 
     nlohmann::json report = {
         {"max_weight", !output.empty() ? output[0].weight() : 0},
@@ -115,7 +117,7 @@ int main(int argc, char *argv[])
         {"num_nodes", dfg->num_nodes()},
         {"num_subgraphs", output.size()},
         {"subgraphs", output},
-        {"time", end - start},
+        {"time", elapsed.count()},
     };
     std::cout << report.dump(4) << std::endl;
 
